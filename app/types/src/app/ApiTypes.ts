@@ -1,5 +1,4 @@
 import { NativeConfiguration } from './ConfigurationTypes';
-import { anyObject } from './BasicTypes';
 
 export type authDataContainer = {
 	authCookie: string;
@@ -11,7 +10,10 @@ export type authDataContainer = {
 };
 
 // the data carried by an event on publish
-export type EventDataObject = anyObject;
+export interface EventDataObject {
+	senderId?: string;
+	[key: string]: any;
+}
 
 export type EventHandlerFunction = (eventData: EventDataObject) => void;
 

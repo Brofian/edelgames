@@ -3,6 +3,7 @@ import ModuleInterface from './ModuleInterface';
 import ModulePlayerApi from './api/ModulePlayerApi';
 import ModuleEventApi from './api/ModuleEventApi';
 import { Logger } from '../util/Logger';
+import ModuleUtilApi from "./api/ModuleUtilApi";
 
 /*
  * This class will be passed to the game instance to allow for restricted access to data.
@@ -13,6 +14,7 @@ export default class ModuleApi {
 	private readonly gameInstance: ModuleGameInterface;
 	private readonly eventApi: ModuleEventApi;
 	private readonly playerApi: ModulePlayerApi;
+	private readonly utilApi: ModuleUtilApi;
 	private readonly logger: Logger;
 
 	constructor(game: ModuleInterface, gameInstance: ModuleGameInterface) {
@@ -21,6 +23,7 @@ export default class ModuleApi {
 		this.logger = new Logger(this.game.getUniqueId());
 		this.eventApi = new ModuleEventApi(this);
 		this.playerApi = new ModulePlayerApi(this);
+		this.utilApi = new ModuleUtilApi(this);
 	}
 
 	public getGameId(): string {
@@ -33,6 +36,10 @@ export default class ModuleApi {
 
 	public getEventApi(): ModuleEventApi {
 		return this.eventApi;
+	}
+
+	public getUtilApi(): ModuleUtilApi {
+		return this.utilApi;
 	}
 
 	public getLogger(): Logger {

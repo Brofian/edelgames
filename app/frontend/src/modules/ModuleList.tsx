@@ -6,6 +6,7 @@ import codenames from './codenames/Codenames';
 import yahtzee from './yahtzee/Yahtzee';
 import colorChecker from './colorChecker/ColorChecker';
 import hangman from './hangman/Hangman';
+import darkVoice from "./darkVoice/DarkVoice";
 
 export const ModuleList: ModuleInterface[] = [
 	exampleChat,
@@ -15,4 +16,5 @@ export const ModuleList: ModuleInterface[] = [
 	yahtzee,
 	colorChecker,
 	hangman,
+	darkVoice
 ];
