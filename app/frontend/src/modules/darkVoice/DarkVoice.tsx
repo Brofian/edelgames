@@ -21,7 +21,7 @@ class DarkVoice implements ModuleInterface {
 	}
 
 	getPlayerRequirements(): PlayerRangeDefinition {
-		return {min: 2, max: 10};
+		return { min: 2, max: 10 };
 	}
 
 	renderGame(): ReactNode {

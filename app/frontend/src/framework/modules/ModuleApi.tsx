@@ -3,7 +3,7 @@ import ModuleInterface from './ModuleInterface';
 import ModulePlayerApi from './api/ModulePlayerApi';
 import ModuleEventApi from './api/ModuleEventApi';
 import { Logger } from '../util/Logger';
-import ModuleUtilApi from "./api/ModuleUtilApi";
+import ModuleUtilApi from './api/ModuleUtilApi';
 
 /*
  * This class will be passed to the game instance to allow for restricted access to data.
