@@ -1,5 +1,4 @@
 import ModuleGame from '../../framework/modules/ModuleGame';
-import ModuleApi from '../../framework/modules/ModuleApi';
 import User from '../../framework/User';
 import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
 import {

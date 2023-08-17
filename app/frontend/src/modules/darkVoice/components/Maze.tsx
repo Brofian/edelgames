@@ -24,7 +24,7 @@ interface IState {}
 
 const canvasWidth = 700;
 const canvasHeight = 700;
-const playerSize = 0.3; // tileSize * 0.3
+const playerSize = 0.3 * 1.1; // tileSize * 0.3, then increase by 1.1 to draw a bigger sprite than hitbox
 export default class Maze extends Component<IProps, IState> {
 	protected bufferedMaze: p5Types.Graphics | undefined = undefined;
 	protected zoom: number = 1.2;
@@ -131,7 +131,7 @@ export default class Maze extends Component<IProps, IState> {
 	}
 
 	setup(p5: p5Types): undefined {
-		p5.frameRate(40);
+		//p5.frameRate(40);
 		p5.ellipseMode(p5.CENTER);
 		return undefined;
 	}

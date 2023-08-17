@@ -12,7 +12,7 @@ export type authDataContainer = {
 // the data carried by an event on publish
 export interface EventDataObject {
 	senderId?: string;
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 export type EventHandlerFunction = (eventData: EventDataObject) => void;

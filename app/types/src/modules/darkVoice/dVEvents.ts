@@ -13,3 +13,10 @@ export interface MazeLayoutChangedEventData extends EventDataObject {
 export interface PlayerPositionsChangedEventData extends EventDataObject {
 	positions: PlayerPosition[];
 }
+
+export interface GameStateUpdateEventData extends EventDataObject {
+	monsterPlayerId: string;
+	scores: {
+		[playerId: string]: number;
+	};
+}

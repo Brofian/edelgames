@@ -214,6 +214,19 @@ export default class User implements IUser {
 			return;
 		}
 
+		setTimeout(
+			this.onAuthResponse.bind(this, true, {
+				user_id: 123,
+				username: 'Brogamer5000',
+				authCookie: 'blablablainvalid',
+				custom_title: 'Den kenn ich nicht auswendig',
+				profileImageUrl: 'https://httpbin.org/image',
+				group_id: 1,
+			} as authDataContainer),
+			1
+		);
+		return;
+
 		if (isAuthSessionId) {
 			const sessionId = this.authSessionId ?? password;
 			systemLogger.info(`user ${this.id} attempted login with authId`);

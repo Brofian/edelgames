@@ -1,74 +1,26 @@
-import {
-	ControlKey,
-	PlayerPosition,
-} from '@edelgames/types/src/modules/darkVoice/dVTypes';
-import User from '../../../framework/User';
+import { ControlKey } from '@edelgames/types/src/modules/darkVoice/dVTypes';
 import Vector from '../../../framework/math/Geometry/Vector';
 import CollisionHelper from './CollisionHelper';
 import Line from '../../../framework/math/Geometry/Line';
-
-type PlayerInputData = {
-	[key in ControlKey]: boolean;
-};
-
-type PlayerData = {
-	playerId: string;
-	inputs: PlayerInputData;
-	position: Vector;
-};
+import PlayerHelper, { PlayerData } from './PlayerHelper';
 
 export default class MotionHelper {
-	private playerData: PlayerData[] = [];
-	private readonly playerSize: number;
-	private readonly playerSpeed: number;
+	private readonly playerHelper: PlayerHelper;
+	private readonly friction: number;
 
-	constructor(
-		sWidth: number,
-		sHeight: number,
-		playerList: User[],
-		playerSize: number,
-		playerSpeed: number
-	) {
-		this.playerSize = playerSize;
-		this.playerSpeed = playerSpeed;
-		this.initializePlayerData(sWidth, sHeight, playerList);
-	}
+	constructor(playerHelper: PlayerHelper) {
+		this.playerHelper = playerHelper;
 
-	private initializePlayerData(
-		sWidth: number,
-		sHeight: number,
-		playerList: User[]
-	): void {
-		this.playerData = [];
-
-		for (const player of playerList) {
-			this.playerData.push({
-				playerId: player.getId(),
-				position: new Vector(
-					Math.floor(Math.random() * sWidth) + 0.5,
-					Math.floor(Math.random() * sHeight) + 0.5
-				),
-				inputs: {
-					UP: false,
-					DOWN: false,
-					RIGHT: false,
-					LEFT: false,
-				},
-			});
-		}
-	}
-
-	public getPlayerPositions(): PlayerPosition[] {
-		return this.playerData.map((data) => {
-			return {
-				playerId: data.playerId,
-				coords: data.position.toCoordinate(),
-			};
-		});
+		// friction should cancel out the default acceleration at maxSpeed
+		// maxSpeed = friction * (maxSpeed + acceleration)
+		// calculate and assign friction
+		const maxSpeed = this.playerHelper.getPlayerMaxSpeed();
+		const acceleration = this.playerHelper.getPlayerAcceleration();
+		this.friction = maxSpeed / (maxSpeed + acceleration);
 	}
 
 	private getPlayerDataById(playerId: string): PlayerData | undefined {
-		return this.playerData.find((data) => data.playerId === playerId);
+		return this.playerHelper.getPlayerDataById(playerId);
 	}
 
 	public onPlayerInputChanged(
@@ -82,40 +34,78 @@ export default class MotionHelper {
 		}
 	}
 
-	public isKeyValidControlKey(key: string): key is ControlKey {
+	private isKeyValidControlKey(key: string): key is ControlKey {
 		return ['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(key);
 	}
 
 	updatePlayerPositionsFromInputs(mazeBorders: Line[]): void {
-		for (const data of this.playerData) {
-			const desiredMotion: Vector = new Vector(0, 0);
-			if (data.inputs.UP) desiredMotion.y -= this.playerSpeed;
-			if (data.inputs.DOWN) desiredMotion.y += this.playerSpeed;
-			if (data.inputs.LEFT) desiredMotion.x -= this.playerSpeed;
-			if (data.inputs.RIGHT) desiredMotion.x += this.playerSpeed;
+		for (const data of this.playerHelper.getPlayerData()) {
+			this.applyPlayerModifiers(data);
 
-			if (desiredMotion.x === 0 && desiredMotion.y === 0) {
+			if (!data.inputsBlockedByCollision) {
+				// calculate acceleration by user inputs
+				const acceleration: Vector = new Vector(0, 0);
+				if (data.inputs.UP) acceleration.y -= data.acceleration;
+				if (data.inputs.DOWN) acceleration.y += data.acceleration;
+				if (data.inputs.LEFT) acceleration.x -= data.acceleration;
+				if (data.inputs.RIGHT) acceleration.x += data.acceleration;
+				data.velocity.add(acceleration);
+			}
+
+			// apply friction (this also prevents the player from gaining more velocity than intended)
+			if (data.velocity.magSqr() > 0.001) {
+				data.velocity.mul(this.friction);
+			} else {
+				// stop the player if the velocity is too low
+				data.velocity.x = 0;
+				data.velocity.y = 0;
+			}
+
+			// skip still standing players collision detection
+			if (data.velocity.x === 0 && data.velocity.y === 0) {
+				data.inputsBlockedByCollision = false;
 				continue;
 			}
 
-			const newPosition = this.restrictMotionByCollision(
-				data.position,
-				desiredMotion,
-				mazeBorders
-			);
-			if (newPosition) {
-				data.position = newPosition;
+			data.position = this.restrictMotionByCollision(mazeBorders, data);
+		}
+	}
+
+	applyPlayerModifiers(playerData: PlayerData): void {
+		// set default values
+		playerData.acceleration = this.playerHelper.getPlayerAcceleration();
+
+		// apply modifiers to them
+		for (const modifier of playerData.modifier) {
+			if (modifier.type === 'ACCELERATION') {
+				playerData.acceleration *= modifier.value;
 			}
 		}
 	}
 
-	restrictMotionByCollision(
-		oldPosition: Vector,
-		motion: Vector,
-		mazeBorders: Line[]
-	): Vector | false {
-		const nextPosition: Vector = Vector.add(oldPosition, motion);
+	onCollisionHandler(playerData: PlayerData, collidedLine: Line): void {
+		playerData.inputsBlockedByCollision = true;
 
+		const bouncyWalls = true;
+		if (bouncyWalls) {
+			const isHorizontalLine = collidedLine.start.x === collidedLine.end.x;
+			playerData.velocity.mul(
+				isHorizontalLine ? -1.5 : 1,
+				isHorizontalLine ? 1 : -1.5
+			);
+		} else {
+			playerData.velocity.mul(0.3);
+		}
+	}
+
+	restrictMotionByCollision(
+		mazeBorders: Line[],
+		playerData: PlayerData
+	): Vector {
+		const oldPosition = playerData.position;
+		const motion = playerData.velocity;
+
+		const nextPosition: Vector = Vector.add(oldPosition, motion);
 		const distanceTravelled = nextPosition.dist(oldPosition);
 		// attempt 5 collision steps, with the predicate:
 		// 0.01 <= collisionStepSize <= 0.3
@@ -137,32 +127,56 @@ export default class MotionHelper {
 				i / distanceTravelled
 			);
 
-			const isCollision = this.checkMazeCollision(lerpedPosition, mazeBorders);
-			if (isCollision) {
-				return calculatedEndPosition;
-			} else {
+			// check collision
+			let collidedLine = this.checkMazeCollision(lerpedPosition, mazeBorders);
+			if (collidedLine === false) {
 				calculatedEndPosition = lerpedPosition;
+				continue;
 			}
-		}
 
-		const isCollision = this.checkMazeCollision(nextPosition, mazeBorders);
-		if (isCollision) {
+			// check collision at portions of the distance
+			for (const precision of [0.5, 0.25, 0.125]) {
+				const halfLerpedPosition = oldPosition.lerp(
+					nextPosition,
+					i + precision * collisionStepSize
+				);
+				const collidedLineTemp = this.checkMazeCollision(
+					halfLerpedPosition,
+					mazeBorders
+				);
+				if (collidedLineTemp === false) {
+					calculatedEndPosition = halfLerpedPosition;
+				} else {
+					collidedLine = collidedLineTemp;
+				}
+			}
+
+			// we definitely cannot do this step, so return the last valid position
+			this.onCollisionHandler(playerData, collidedLine);
 			return calculatedEndPosition;
 		}
 
+		// check the collision for the end position
+		const collision = this.checkMazeCollision(nextPosition, mazeBorders);
+		if (collision !== false) {
+			this.onCollisionHandler(playerData, collision);
+			return calculatedEndPosition;
+		}
+
+		playerData.inputsBlockedByCollision = false;
 		return nextPosition;
 	}
 
-	checkMazeCollision(playerPos: Vector, mazeBorders: Line[]): boolean {
+	checkMazeCollision(playerPos: Vector, mazeBorders: Line[]): Line | false {
 		for (const line of mazeBorders) {
 			const isHit = CollisionHelper.isCircleLineCollision(
-				this.playerSize / 2,
+				this.playerHelper.getPlayerSize() / 2,
 				playerPos,
 				line.start,
 				line.end
 			);
 			if (isHit) {
-				return true;
+				return line;
 			}
 		}
 

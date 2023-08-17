@@ -35,12 +35,13 @@ export default class Vector {
 	 * @param y
 	 * @param z
 	 */
-	public set(x: number, y: number, z: number | undefined = undefined): void {
+	public set(x: number, y: number, z: number | undefined = undefined): Vector {
 		this.x = x;
 		this.y = y;
 		if (z !== undefined) {
 			this.z = z;
 		}
+		return this;
 	}
 
 	/**
@@ -70,10 +71,11 @@ export default class Vector {
 	 * @description Addition of the given Vector to this Vector
 	 * @param other
 	 */
-	public add(other: Vector): void {
+	public add(other: Vector): Vector {
 		this.x += other.x;
 		this.y += other.y;
 		this.z += other.z;
+		return this;
 	}
 
 	/**
@@ -89,10 +91,11 @@ export default class Vector {
 	 * @description Subtraction of the given Vector from this Vector
 	 * @param other
 	 */
-	public sub(other: Vector): void {
+	public sub(other: Vector): Vector {
 		this.x -= other.x;
 		this.y -= other.y;
 		this.z -= other.z;
+		return this;
 	}
 
 	/**
@@ -114,10 +117,11 @@ export default class Vector {
 		scalar: number,
 		scalarY: number = undefined,
 		scalarZ: number = undefined
-	): void {
+	): Vector {
 		this.x *= scalar;
 		this.y *= scalarY === undefined ? scalar : scalarY;
 		this.z *= scalarZ === undefined ? scalar : scalarZ;
+		return this;
 	}
 
 	/**
@@ -150,10 +154,11 @@ export default class Vector {
 		scalar: number,
 		scalarY: number = undefined,
 		scalarZ: number = undefined
-	): void {
+	): Vector {
 		this.x /= scalar;
 		this.y /= scalarY === undefined ? scalar : scalarY;
 		this.z /= scalarZ === undefined ? scalar : scalarZ;
+		return this;
 	}
 
 	/**
@@ -232,30 +237,33 @@ export default class Vector {
 	/**
 	 * @description Normalize this Vector to the unit distance of one
 	 */
-	public normalize(): void {
+	public normalize(): Vector {
 		this.limit(1);
+		return this;
 	}
 
 	/**
 	 * @description Limit this vector to a certain magnitude
 	 * @param limit
 	 */
-	public limit(limit: number): void {
+	public limit(limit: number): Vector {
 		const mag = this.mag();
 		if (mag != 0 && mag > limit) {
 			this.mul(limit / mag);
 		}
+		return this;
 	}
 
 	/**
 	 * @description Set the magnitude of this vector to a certain value, effectively trimming or stretching the vector
 	 * @param len
 	 */
-	public setMag(len: number): void {
+	public setMag(len: number): Vector {
 		const mag = this.mag();
 		if (mag != 0) {
 			this.mul(len / mag);
 		}
+		return this;
 	}
 
 	/**
@@ -269,9 +277,10 @@ export default class Vector {
 	 * @description Rotate this Vector to face the given angle in degree
 	 * @param angle
 	 */
-	public setHeading(angle: number): void {
+	public setHeading(angle: number): Vector {
 		const heading = this.heading();
 		this.rotate(angle - heading, heading);
+		return this;
 	}
 
 	/**
@@ -279,12 +288,13 @@ export default class Vector {
 	 * @param angle
 	 * @param assumedHeading
 	 */
-	public rotate(angle: number, assumedHeading: number = undefined): void {
+	public rotate(angle: number, assumedHeading: number = undefined): Vector {
 		const baseAngle =
 			assumedHeading === undefined ? this.heading() : assumedHeading;
 		const length = this.mag();
 		this.x = length * Math.cos(baseAngle + angle);
 		this.y = length * Math.sin(baseAngle + angle);
+		return this;
 	}
 
 	/**

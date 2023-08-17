@@ -103,4 +103,9 @@ export default class ModulePlayerApi {
 	public getPlayerById(id: string): User | undefined {
 		return this.getRoomMembers().find((user) => user.getId() === id);
 	}
+
+	public getRandomPlayer(): User {
+		const members = this.getRoomMembers();
+		return members[Math.floor(Math.random() * members.length)];
+	}
 }

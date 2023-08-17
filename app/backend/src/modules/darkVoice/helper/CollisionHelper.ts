@@ -18,9 +18,16 @@ export default class CollisionHelper {
 			return false;
 		}
 
-		const combination = abVec.copy();
-		combination.add(acVec);
-
+		const combination = abVec.copy().add(acVec);
 		return combination.mag() < lineLength + 2 * cRadius;
+	}
+
+	static isCircleCircleCollision(
+		cRadius1: number,
+		cOrigin1: Vector,
+		cRadius2: number,
+		cOrigin2: Vector
+	): boolean {
+		return cOrigin1.dist(cOrigin2) < cRadius1 + cRadius2;
 	}
 }

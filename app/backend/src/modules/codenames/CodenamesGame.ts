@@ -7,7 +7,6 @@ import Room from '../../framework/Room';
 import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
 import { Category, Hint } from '@edelgames/types/src/modules/codenames/CNTypes';
 import { BoardElement } from './BoardElement';
-import User from '../../framework/User';
 
 /*
  * The actual game instance, that controls and manages the game

@@ -22,3 +22,13 @@ class DarkVoice extends Module {
 
 const darkVoice = new DarkVoice();
 export default darkVoice;
+
+/*
+	Konzept:
+
+	Alle Spieler können sich im Labyrint bewegen. Es gibt ein Monster unter ihnen.
+	Das Monster bekommt Punkte dafür, andere Spieler zu fressen.
+
+
+
+ */

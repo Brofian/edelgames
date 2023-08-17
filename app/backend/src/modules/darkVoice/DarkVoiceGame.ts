@@ -1,5 +1,6 @@
 import ModuleGame from '../../framework/modules/ModuleGame';
 import {
+	GameStateUpdateEventData,
 	MazeLayoutChangedEventData,
 	PlayerInputChangedEventData,
 	PlayerPositionsChangedEventData,
@@ -9,6 +10,7 @@ import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
 import MazeGenerator from './helper/MazeGenerator';
 import MotionHelper from './helper/MotionHelper';
 import Line from '../../framework/math/Geometry/Line';
+import PlayerHelper from './helper/PlayerHelper';
 
 /*
  * The actual game instance, that controls and manages the game
@@ -16,9 +18,8 @@ import Line from '../../framework/math/Geometry/Line';
 export default class DarkVoiceGame extends ModuleGame {
 	private maze: MazeGrid;
 	private mazeBorderList: Line[];
-	private playerSpeed = 0.15;
-	private playerSize = 0.3;
 
+	private playerHelper: PlayerHelper;
 	private motionHelper: MotionHelper;
 
 	onGameInitialize(): void {
@@ -29,13 +30,15 @@ export default class DarkVoiceGame extends ModuleGame {
 		this.mazeBorderList = MazeGenerator.generateMazeBorderListFromMaze(
 			this.maze
 		);
-		this.motionHelper = new MotionHelper(
-			sWidth,
-			sHeight,
+
+		this.playerHelper = new PlayerHelper(0.3, 0.15, 0.075);
+		this.playerHelper.initializePlayerData(
 			this.api.getPlayerApi().getRoomMembers(),
-			this.playerSize,
-			this.playerSpeed
+			sWidth,
+			sHeight
 		);
+
+		this.motionHelper = new MotionHelper(this.playerHelper);
 
 		this.sendMazeUpdate();
 		this.sendPlayerPositions();
@@ -64,12 +67,12 @@ export default class DarkVoiceGame extends ModuleGame {
 	sendGameStatePeriodically(): void {
 		this.motionHelper.updatePlayerPositionsFromInputs(this.mazeBorderList);
 		this.sendPlayerPositions();
-		//this.sendMazeUpdate();
+		this.sendGameStateUpdate();
 	}
 
 	sendPlayerPositions(): void {
 		this.api.getEventApi().sendRoomMessage('playerPositionsChanged', {
-			positions: this.motionHelper.getPlayerPositions(),
+			positions: this.playerHelper.getPlayerPositions(),
 		} as PlayerPositionsChangedEventData);
 	}
 
@@ -77,6 +80,13 @@ export default class DarkVoiceGame extends ModuleGame {
 		this.api.getEventApi().sendRoomMessage('mazeLayoutChanged', {
 			maze: this.maze,
 		} as MazeLayoutChangedEventData);
+	}
+
+	sendGameStateUpdate(): void {
+		this.api.getEventApi().sendRoomMessage('gameStateUpdate', {
+			monsterPlayerId: this.playerHelper.getMonsterPlayerId(),
+			scores: {},
+		} as GameStateUpdateEventData);
 	}
 
 	onMazeLayoutRequested(eventData: EventDataObject): void {
