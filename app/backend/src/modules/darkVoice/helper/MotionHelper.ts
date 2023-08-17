@@ -117,9 +117,12 @@ export default class MotionHelper {
 		const nextPosition: Vector = Vector.add(oldPosition, motion);
 
 		const distanceTravelled = nextPosition.dist(oldPosition);
+		// attempt 5 collision steps, with the predicate:
 		// 0.01 <= collisionStepSize <= 0.3
-		//const collisionStepSize = Math.max(0.01, Math.min(distanceTravelled/5, 0.3));
-		const collisionStepSize = distanceTravelled / 5;
+		const collisionStepSize = Math.max(
+			0.01,
+			Math.min(distanceTravelled / 5, 0.2)
+		);
 
 		let calculatedEndPosition = oldPosition;
 
