@@ -138,7 +138,7 @@ export default class Room {
 				},
 				true
 			);
-			systemLogger.info(`user ${userId} notified the gameEvent ${eventName}`);
+			systemLogger.debug(`user ${userId} notified the gameEvent ${eventName}`);
 		}
 	}
 

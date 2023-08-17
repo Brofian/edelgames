@@ -14,7 +14,7 @@ export class Logger {
 	private initializeLogger(): void {
 		if (!this.loggerInitialized) {
 			// @ts-ignore
-			Logger.LOG_LEVEL = process.env.LOG_LEVEL || 0;
+			Logger.LOG_LEVEL = process.env.LOG_LEVEL || 3;
 			this.loggerInitialized = true;
 		}
 	}

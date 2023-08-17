@@ -18,23 +18,27 @@ interface IProps {
 interface IState {
 }
 
-const width = 700;
-const height = 700;
+const canvasWidth = 700;
+const canvasHeight = 700;
+const playerSize = 0.3; // tileSize * 0.3
 export default class Maze extends Component<IProps, IState> {
     protected bufferedMaze: p5Types.Graphics | undefined = undefined;
-    protected zoom: number = 1;
+    protected zoom: number = 1.2;
     protected inputMap: ControlKeyMap = {
         UP: false,
         DOWN: false,
         LEFT: false,
         RIGHT: false,
     };
-    protected tileSize = width / 28;
+    protected tileSize = canvasWidth / 14;
+    protected playerSize = this.tileSize * playerSize;
+    protected playerVisibilityRange = 3;
     protected playerCoords: PlayerPosition[] = [];
     protected nextPlayerCoords: PlayerPosition[] = [];
     protected tpsToFpsRatio = 1;
     protected frameSinceTick = 0;
     protected maze: MazeGrid | undefined = undefined;
+    protected mazeLayoutRequested = 0;
     protected readonly localePlayerId: string;
 
     constructor(props: IProps) {
@@ -107,6 +111,7 @@ export default class Maze extends Component<IProps, IState> {
     onMazeLayoutChanged(eventData: EventDataObject): void {
         const event = eventData as MazeLayoutChangedEventData;
         this.maze = event.maze;
+        this.mazeLayoutRequested = 0;
         this.bufferedMaze = undefined;
     }
 
@@ -119,20 +124,33 @@ export default class Maze extends Component<IProps, IState> {
 
     setup(p5: p5Types): undefined {
         p5.frameRate(40);
+        p5.ellipseMode(p5.CENTER);
         return undefined;
+    }
+
+
+
+    requestMazeLayout(): void {
+        this.mazeLayoutRequested = Date.now();
+        this.props.api
+            .getEventApi()
+            .sendMessageToServer('mazeLayoutRequest', {});
     }
 
     draw(p5: p5Types): undefined {
         if (!this.maze) {
+            if (Date.now() - this.mazeLayoutRequested > 5000) {
+                this.requestMazeLayout();
+            }
             return;
         }
 
         if (!this.bufferedMaze) {
-            this.bufferedMaze = p5.createGraphics(width, height);
+            this.bufferedMaze = p5.createGraphics(this.maze.length * this.tileSize, this.maze[0].length * this.tileSize);
             this.createBufferedMaze(p5, this.bufferedMaze);
         }
 
-        const portionOfMoveToDisplay = this.calculateAnimationSmoothingValue(p5)
+        const portionOfMoveToDisplay = this.calculateAnimationSmoothingValue(p5);
 
 
         // calculate smoothed out values for all players
@@ -144,6 +162,7 @@ export default class Maze extends Component<IProps, IState> {
 
             if (nextPlayerPos) {
                 const smoothedPos = this.calculateSmoothedPlayerPosition(playerPos.coords, nextPlayerPos.coords, portionOfMoveToDisplay);
+
                 if (playerPos.playerId === this.localePlayerId) {
                     localePlayerPos = smoothedPos
                 } else {
@@ -156,8 +175,17 @@ export default class Maze extends Component<IProps, IState> {
         }
 
 		if (!localePlayerPos) {
-			return; // i don't know, why this should happen. But just to be sure...
+			return; // I don't know why this should happen. But just to be sure...
 		}
+
+        playerPositionList = playerPositionList.filter(((localePlayerPos: Coordinate, otherPos: PlayerPosition) => {
+            const distSquared =
+                Math.pow(otherPos.coords.x - localePlayerPos.x, 2) +
+                Math.pow(otherPos.coords.y - localePlayerPos.y, 2);
+            return distSquared < this.playerVisibilityRange*this.playerVisibilityRange;
+        }).bind(null, localePlayerPos));
+
+
 
         // translate absolute grid coordinates into relative canvas coordinates
         playerPositionList = this.generateAbsoluteCoordsFromRelative(playerPositionList);
@@ -168,7 +196,7 @@ export default class Maze extends Component<IProps, IState> {
         // eslint-disable-next-line no-lone-blocks
         {
             p5.scale(this.zoom);
-            p5.translate(width / (2 * this.zoom), height / (2 * this.zoom));
+            p5.translate(canvasWidth / (2 * this.zoom), canvasHeight / (2 * this.zoom));
 
             p5.background('#222');
             p5.image(
@@ -179,19 +207,22 @@ export default class Maze extends Component<IProps, IState> {
 
             // draw locale player
             p5.fill('#f00');
-            p5.circle(0, 0, 10);
+            p5.circle(0, 0, this.playerSize);
             p5.fill('#33f');
 
 
             for (const otherPos of playerPositionList) {
-				p5.circle(
+                p5.circle(
 					(otherPos.coords.x - localePlayerPos.x) / this.zoom,
 					(otherPos.coords.y - localePlayerPos.y) / this.zoom,
-					10
+                    this.playerSize
 				);
             }
         }
         p5.pop();
+
+        p5.stroke(255);
+        p5.text(Math.floor(p5.frameRate()), 50, 50);
 
         return undefined; // return type to match p5 standards
     }
@@ -267,8 +298,8 @@ export default class Maze extends Component<IProps, IState> {
             <DrawingCanvas
                 drawFunction={this.draw.bind(this)}
                 setupFunction={this.setup.bind(this)}
-                canvasWidth={700}
-                canvasHeight={700}
+                canvasWidth={canvasWidth}
+                canvasHeight={canvasHeight}
                 enableManualDrawing={false}
             />
         );

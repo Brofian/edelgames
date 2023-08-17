@@ -4,34 +4,40 @@ import {
 	PlayerInputChangedEventData,
 	PlayerPositionsChangedEventData,
 } from '@edelgames/types/src/modules/darkVoice/dVEvents';
-import {
-	ControlKey,
-	MazeGrid,
-	MazeTile,
-	PlayerPosition,
-} from '@edelgames/types/src/modules/darkVoice/dVTypes';
+import { MazeGrid } from '@edelgames/types/src/modules/darkVoice/dVTypes';
 import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
-
-type PlayerInputData = {
-	playerId: string;
-	inputs: {
-		[key in ControlKey]: boolean;
-	};
-}[];
+import MazeGenerator from './helper/MazeGenerator';
+import MotionHelper from './helper/MotionHelper';
+import Line from '../../framework/math/Geometry/Line';
 
 /*
  * The actual game instance, that controls and manages the game
  */
 export default class DarkVoiceGame extends ModuleGame {
-	private playerPositions: PlayerPosition[];
 	private maze: MazeGrid;
-	private playerInputs: PlayerInputData = [];
-	private playerSpeed = 0.05;
+	private mazeBorderList: Line[];
+	private playerSpeed = 0.15;
+	private playerSize = 0.3;
+
+	private motionHelper: MotionHelper;
 
 	onGameInitialize(): void {
-		this.maze = this.generateMazeGrid(15, 10);
+		const sWidth = 10;
+		const sHeight = 10;
+
+		this.maze = MazeGenerator.generate(sWidth, sHeight, 40);
+		this.mazeBorderList = MazeGenerator.generateMazeBorderListFromMaze(
+			this.maze
+		);
+		this.motionHelper = new MotionHelper(
+			sWidth,
+			sHeight,
+			this.api.getPlayerApi().getRoomMembers(),
+			this.playerSize,
+			this.playerSpeed
+		);
+
 		this.sendMazeUpdate();
-		this.playerPositions = this.generatePlayerPositions(15, 10);
 		this.sendPlayerPositions();
 		this.api
 			.getUtilApi()
@@ -47,63 +53,23 @@ export default class DarkVoiceGame extends ModuleGame {
 				'playerInputChanged',
 				this.onPlayerInputChanged.bind(this)
 			);
-	}
-
-	generateMazeGrid(sWidth: number, sHeight: number): MazeGrid {
-		const maze: MazeGrid = [];
-
-		// todo improve this algorithm to generate a working maze
-		for (let x = 0; x < sWidth; x++) {
-			const mazeColumn: MazeTile[] = [];
-
-			for (let y = 0; y < sHeight; y++) {
-				mazeColumn.push({
-					borderTop: Math.random() > 0.5,
-					borderLeft: Math.random() > 0.5,
-				});
-			}
-			maze.push(mazeColumn);
-		}
-		return maze;
-	}
-
-	generatePlayerPositions(sWidth: number, sHeight: number): PlayerPosition[] {
-		// also reset player inputs
-		this.playerInputs = [];
-
-		const posList: PlayerPosition[] = [];
-		for (const player of this.api.getPlayerApi().getRoomMembers()) {
-			posList.push({
-				playerId: player.getId(),
-				coords: {
-					x: Math.random() * sWidth + 0.5,
-					y: Math.random() * sHeight + 0.5,
-				},
-			});
-			// also generate default player Input
-			this.playerInputs.push({
-				playerId: player.getId(),
-				inputs: {
-					UP: false,
-					DOWN: false,
-					RIGHT: false,
-					LEFT: false,
-				},
-			});
-		}
-
-		return posList;
+		this.api
+			.getEventApi()
+			.addEventHandler(
+				'mazeLayoutRequest',
+				this.onMazeLayoutRequested.bind(this)
+			);
 	}
 
 	sendGameStatePeriodically(): void {
-		this.updatePlayerPositionsFromInputs();
+		this.motionHelper.updatePlayerPositionsFromInputs(this.mazeBorderList);
 		this.sendPlayerPositions();
-		this.sendMazeUpdate();
+		//this.sendMazeUpdate();
 	}
 
 	sendPlayerPositions(): void {
 		this.api.getEventApi().sendRoomMessage('playerPositionsChanged', {
-			positions: this.playerPositions,
+			positions: this.motionHelper.getPlayerPositions(),
 		} as PlayerPositionsChangedEventData);
 	}
 
@@ -113,31 +79,20 @@ export default class DarkVoiceGame extends ModuleGame {
 		} as MazeLayoutChangedEventData);
 	}
 
+	onMazeLayoutRequested(eventData: EventDataObject): void {
+		this.api
+			.getEventApi()
+			.sendPlayerMessage(eventData.senderId, 'mazeLayoutChanged', {
+				maze: this.maze,
+			} as MazeLayoutChangedEventData);
+	}
+
 	onPlayerInputChanged(eventData: EventDataObject): void {
 		const event = eventData as PlayerInputChangedEventData;
-		const playerInputs = this.playerInputs.find(
-			(input) => input.playerId === event.senderId
+		this.motionHelper.onPlayerInputChanged(
+			event.key,
+			event.state,
+			event.senderId
 		);
-		if (playerInputs && this.isKeyValidControlKey(event.key)) {
-			playerInputs.inputs[event.key] = !!event.state;
-		}
-	}
-
-	isKeyValidControlKey(key: string): key is ControlKey {
-		return ['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(key);
-	}
-
-	updatePlayerPositionsFromInputs(): void {
-		for (const pInput of this.playerInputs) {
-			const posObject = this.playerPositions.find(
-				(pos) => pos.playerId === pInput.playerId
-			);
-			if (posObject) {
-				if (pInput.inputs.UP) posObject.coords.y -= this.playerSpeed;
-				if (pInput.inputs.DOWN) posObject.coords.y += this.playerSpeed;
-				if (pInput.inputs.LEFT) posObject.coords.x -= this.playerSpeed;
-				if (pInput.inputs.RIGHT) posObject.coords.x += this.playerSpeed;
-			}
-		}
 	}
 }
