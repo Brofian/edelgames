@@ -158,7 +158,10 @@ export default class Maze extends Component<IProps, IState> {
 		}
 
 		this.frameSinceTick++;
-		const portionOfMoveToDisplay = Math.min(this.frameSinceTick * (20/p5.frameRate()), 1);
+		const portionOfMoveToDisplay = Math.min(
+			this.frameSinceTick * (20 / p5.frameRate()),
+			1
+		);
 
 		// calculate smoothed out values for all players
 		let playerPositionList: PlayerPosition[] = [];
@@ -173,7 +176,9 @@ export default class Maze extends Component<IProps, IState> {
 				const oldPos = playerPos.coords;
 				const newPos = nextPlayerPos.coords;
 
-				const smoothedPos = p5.createVector(oldPos.x, oldPos.y).lerp(p5.createVector(newPos.x, newPos.y), portionOfMoveToDisplay)
+				const smoothedPos = p5
+					.createVector(oldPos.x, oldPos.y)
+					.lerp(p5.createVector(newPos.x, newPos.y), portionOfMoveToDisplay);
 
 				if (playerPos.playerId === this.localePlayerId) {
 					localePlayerPos = smoothedPos;
@@ -245,7 +250,6 @@ export default class Maze extends Component<IProps, IState> {
 
 		return undefined; // return type to match p5 standards
 	}
-
 
 	/**
 	 * @description Applies zoom and client specific tileSize to the relative grid coordinates
