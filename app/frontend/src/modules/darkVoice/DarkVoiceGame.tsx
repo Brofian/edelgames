@@ -3,10 +3,13 @@ import ModuleGameInterface from '../../framework/modules/ModuleGameInterface';
 import ModuleApi from '../../framework/modules/ModuleApi';
 import darkVoice from './DarkVoice';
 import Maze from './components/Maze';
-import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
-import {GameProgressState, PlayerScore} from "@edelgames/types/src/modules/darkVoice/dVTypes";
-import {GameStateUpdateEventData} from "@edelgames/types/src/modules/darkVoice/dVEvents";
-import DataBoard from "./components/DataBoard";
+import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
+import {
+	GameProgressState,
+	PlayerScore,
+} from '@edelgames/types/src/modules/darkVoice/dVTypes';
+import { GameStateUpdateEventData } from '@edelgames/types/src/modules/darkVoice/dVEvents';
+import DataBoard from './components/DataBoard';
 
 interface IState {
 	gameProgressState: GameProgressState;
@@ -21,15 +24,17 @@ export default class DarkVoiceGame
 	private readonly api: ModuleApi;
 
 	state = {
-		gameProgressState: "BEGINNING" as GameProgressState,
+		gameProgressState: 'BEGINNING' as GameProgressState,
 		scores: [],
-		monsterPlayerId: 'none'
+		monsterPlayerId: 'none',
 	};
 
 	constructor(props: {}) {
 		super(props);
 		this.api = new ModuleApi(darkVoice, this);
-		this.api.getEventApi().addEventHandler('gameStateUpdate', this.onGameStateUpdated.bind(this));
+		this.api
+			.getEventApi()
+			.addEventHandler('gameStateUpdate', this.onGameStateUpdated.bind(this));
 	}
 
 	componentDidMount() {}
@@ -41,7 +46,7 @@ export default class DarkVoiceGame
 		this.setState({
 			monsterPlayerId: event.monsterPlayerId,
 			gameProgressState: event.gameProgressState,
-			scores: event.scores
+			scores: event.scores,
 		});
 	}
 

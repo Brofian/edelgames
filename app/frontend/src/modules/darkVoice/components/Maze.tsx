@@ -3,7 +3,8 @@ import DrawingCanvas from '../../../framework/components/DrawingCanvas/DrawingCa
 import p5Types from 'p5';
 import {
 	ControlKey,
-	ControlKeyMap, GameProgressState,
+	ControlKeyMap,
+	GameProgressState,
 	MazeGrid,
 	PlayerPosition,
 } from '@edelgames/types/src/modules/darkVoice/dVTypes';
@@ -28,16 +29,15 @@ const canvasWidth = 700;
 const canvasHeight = 700;
 const playerSize = 0.3 * 1.1; // tileSize * 0.3, then increase by 1.1 to draw a bigger sprite than hitbox
 
-const mazeColors: {[key in GameProgressState]: string} = {
+const mazeColors: { [key in GameProgressState]: string } = {
 	BEGINNING: '#ceffaf',
 	MIDDLE: '#fff4af',
-	ENDGAME: '#ffa798'
-}
+	ENDGAME: '#ffa798',
+};
 const monsterColor: string = '#ec2d2d';
 const playerColor: string = '#334eff';
 
 export default class Maze extends Component<IProps, IState> {
-
 	protected bufferedMaze: p5Types.Graphics | undefined = undefined;
 	protected zoom: number = 1.2;
 	protected inputMap: ControlKeyMap = {
@@ -192,10 +192,14 @@ export default class Maze extends Component<IProps, IState> {
 				const oldPos = playerPos.coords;
 				const newPos = nextPlayerPos.coords;
 
-				const smoothedPos = nextPlayerPos.teleport ? p5.createVector(newPos.x, newPos.y) :
-					p5
-					.createVector(oldPos.x, oldPos.y)
-					.lerp(p5.createVector(newPos.x, newPos.y), portionOfMoveToDisplay);
+				const smoothedPos = nextPlayerPos.teleport
+					? p5.createVector(newPos.x, newPos.y)
+					: p5
+							.createVector(oldPos.x, oldPos.y)
+							.lerp(
+								p5.createVector(newPos.x, newPos.y),
+								portionOfMoveToDisplay
+							);
 
 				if (playerPos.playerId === this.localePlayerId) {
 					localePlayerPos = smoothedPos;
@@ -249,11 +253,19 @@ export default class Maze extends Component<IProps, IState> {
 
 			// draw locale player
 			p5.stroke('#eee');
-			p5.fill(this.props.monsterPlayerId === this.localePlayerId ? monsterColor : playerColor);
+			p5.fill(
+				this.props.monsterPlayerId === this.localePlayerId
+					? monsterColor
+					: playerColor
+			);
 			p5.circle(0, 0, this.playerSize);
 
 			for (const otherPos of playerPositionList) {
-				p5.fill(this.props.monsterPlayerId === otherPos.playerId ? monsterColor : playerColor);
+				p5.fill(
+					this.props.monsterPlayerId === otherPos.playerId
+						? monsterColor
+						: playerColor
+				);
 
 				p5.circle(
 					(otherPos.coords.x - localePlayerPos.x) / this.zoom,
