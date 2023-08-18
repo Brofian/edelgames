@@ -62,7 +62,7 @@ export default class DataBoard extends Component<IProps, {}> {
 		if (isMonsterPlayer) rowClasses.push('is-monster-player');
 
 		return (
-			<div key={"player_score_" + index} className={rowClasses.join(' ')}>
+			<div key={'player_score_' + index} className={rowClasses.join(' ')}>
 				<div className={'scoreboard-col-rank'}>{index + 1}</div>
 
 				<div className={'scoreboard-col-image'}>

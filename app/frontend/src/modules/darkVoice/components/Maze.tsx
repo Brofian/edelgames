@@ -4,7 +4,8 @@ import p5Types from 'p5';
 import {
 	ControlKey,
 	ControlKeyMap,
-	GameProgressState, ItemObject,
+	GameProgressState,
+	ItemObject,
 	MazeGrid,
 	PlayerPosition,
 } from '@edelgames/types/src/modules/darkVoice/dVTypes';
@@ -61,7 +62,7 @@ export default class Maze extends Component<IProps, IState> {
 	protected mazeLayoutRequested = 0;
 	protected readonly localePlayerId: string;
 	protected items: ItemObject[] = [];
-	protected canvasImages: {[key: string]: p5Types.Image|undefined} = {
+	protected canvasImages: { [key: string]: p5Types.Image | undefined } = {
 		monsterizer: undefined,
 		accelerator: undefined,
 		slowdown: undefined,
@@ -90,7 +91,7 @@ export default class Maze extends Component<IProps, IState> {
 			.addEventHandler(
 				'itemPositionsChanged',
 				this.onItemPositionsChanged.bind(this)
-			)
+			);
 	}
 
 	private keyDownListener = this.onInputChanged.bind(this, true);
@@ -171,9 +172,15 @@ export default class Maze extends Component<IProps, IState> {
 		p5.ellipseMode(p5.CENTER);
 		p5.textSize(16);
 		// preload images
-		p5.loadImage(EyeEvilSvg, img => { this.canvasImages['monsterizer'] = img });
-		p5.loadImage(RabbitRunningSvg, img => { this.canvasImages['accelerator'] = img;	});
-		p5.loadImage(TurtleSvg, img => { this.canvasImages['slowdown'] = img;	});
+		p5.loadImage(EyeEvilSvg, (img) => {
+			this.canvasImages['monsterizer'] = img;
+		});
+		p5.loadImage(RabbitRunningSvg, (img) => {
+			this.canvasImages['accelerator'] = img;
+		});
+		p5.loadImage(TurtleSvg, (img) => {
+			this.canvasImages['slowdown'] = img;
+		});
 		return undefined;
 	}
 
@@ -278,17 +285,19 @@ export default class Maze extends Component<IProps, IState> {
 
 			// draw items
 			for (const item of this.items) {
-				const icon = this.canvasImages[item.identifier]
+				const icon = this.canvasImages[item.identifier];
 				if (icon) {
 					const iconPosition = this.absoluteCoordsToRelative({
 						x: item.position.x - 0.15,
 						y: item.position.y - 0.15,
 					});
-					p5.image(icon,
+					p5.image(
+						icon,
 						(iconPosition.x - localePlayerPos.x) / this.zoom,
 						(iconPosition.y - localePlayerPos.y) / this.zoom,
 						this.playerSize,
-						this.playerSize);
+						this.playerSize
+					);
 				}
 			}
 
