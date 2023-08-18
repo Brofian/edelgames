@@ -12,7 +12,8 @@ export type authDataContainer = {
 // the data carried by an event on publish
 export interface EventDataObject {
 	senderId?: string;
-	[key: string]: unknown;
+	// eslint-disable-next-line  @typescript-eslint/no-explicit-any
+	[key: string]: any;
 }
 
 export type EventHandlerFunction = (eventData: EventDataObject) => void;

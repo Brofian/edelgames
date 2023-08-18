@@ -1,2 +1,13 @@
 #darkVoice {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	width: 100%;
+
+	.react-p5 {
+		display: flex;
+		align-items: center;
+	}
+
+	@import "components/DataBoard";
 }

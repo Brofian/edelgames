@@ -1,0 +1,59 @@
+.data-board {
+	border: 3px solid $black;
+	border-radius: 0.5rem;
+	background-color: $gray-700;
+
+	.scoreboard {
+		display: flex;
+		flex-direction: column;
+		min-width: 30rem;
+		padding: 1rem 0;
+
+		.scoreboard-row {
+			display: flex;
+			padding: 0.5rem 1rem;
+
+			&.is-locale-player {
+
+			}
+
+			&.is-monster-player {
+
+			}
+
+			&.scoreboard-header {
+				background-color: $gray-800;
+			}
+
+
+			.scoreboard-col-rank {
+				width: 3rem;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.scoreboard-col-image {
+				width: 3rem;
+				display: flex;
+				justify-content: center;
+			}
+
+			.scoreboard-col-name {
+				flex: 1;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.scoreboard-col-points {
+				width: 5rem;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+		}
+	}
+
+}

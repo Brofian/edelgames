@@ -5,12 +5,16 @@ import {
 	PlayerInputChangedEventData,
 	PlayerPositionsChangedEventData,
 } from '@edelgames/types/src/modules/darkVoice/dVEvents';
-import { MazeGrid } from '@edelgames/types/src/modules/darkVoice/dVTypes';
+import {
+	GameProgressState,
+	MazeGrid,
+} from '@edelgames/types/src/modules/darkVoice/dVTypes';
 import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
 import MazeGenerator from './helper/MazeGenerator';
 import MotionHelper from './helper/MotionHelper';
 import Line from '../../framework/math/Geometry/Line';
 import PlayerHelper from './helper/PlayerHelper';
+import MonsterHelper from './helper/MonsterHelper';
 
 /*
  * The actual game instance, that controls and manages the game
@@ -18,26 +22,33 @@ import PlayerHelper from './helper/PlayerHelper';
 export default class DarkVoiceGame extends ModuleGame {
 	private maze: MazeGrid;
 	private mazeBorderList: Line[];
+	private gameProgressState: GameProgressState = 'BEGINNING';
 
 	private playerHelper: PlayerHelper;
+	private monsterHelper: MonsterHelper;
 	private motionHelper: MotionHelper;
 
 	onGameInitialize(): void {
 		const sWidth = 10;
 		const sHeight = 10;
+		const playerSize = 0.3;
 
 		this.maze = MazeGenerator.generate(sWidth, sHeight, 40);
 		this.mazeBorderList = MazeGenerator.generateMazeBorderListFromMaze(
 			this.maze
 		);
 
-		this.playerHelper = new PlayerHelper(0.3, 0.15, 0.075);
-		this.playerHelper.initializePlayerData(
-			this.api.getPlayerApi().getRoomMembers(),
+		this.playerHelper = new PlayerHelper(
 			sWidth,
-			sHeight
+			sHeight,
+			playerSize,
+			0.15,
+			0.075
 		);
-
+		this.playerHelper.initializePlayerData(
+			this.api.getPlayerApi().getRoomMembers()
+		);
+		this.monsterHelper = new MonsterHelper(this.playerHelper, playerSize * 0.6);
 		this.motionHelper = new MotionHelper(this.playerHelper);
 
 		this.sendMazeUpdate();
@@ -45,11 +56,7 @@ export default class DarkVoiceGame extends ModuleGame {
 		this.api
 			.getUtilApi()
 			.getTimer()
-			.startInterval(
-				'call_game_state_update',
-				this.sendGameStatePeriodically.bind(this),
-				50
-			);
+			.startInterval('call_game_state_update', this.gameLoop.bind(this), 50);
 		this.api
 			.getEventApi()
 			.addEventHandler(
@@ -64,8 +71,10 @@ export default class DarkVoiceGame extends ModuleGame {
 			);
 	}
 
-	sendGameStatePeriodically(): void {
+	gameLoop(): void {
+		this.monsterHelper.checkMonsterPlayerCollision();
 		this.motionHelper.updatePlayerPositionsFromInputs(this.mazeBorderList);
+		// send data to players
 		this.sendPlayerPositions();
 		this.sendGameStateUpdate();
 	}
@@ -84,8 +93,9 @@ export default class DarkVoiceGame extends ModuleGame {
 
 	sendGameStateUpdate(): void {
 		this.api.getEventApi().sendRoomMessage('gameStateUpdate', {
-			monsterPlayerId: this.playerHelper.getMonsterPlayerId(),
-			scores: {},
+			monsterPlayerId: this.monsterHelper.getMonsterData().playerId,
+			scores: this.playerHelper.getPlayerScores(),
+			gameProgressState: this.gameProgressState,
 		} as GameStateUpdateEventData);
 	}
 

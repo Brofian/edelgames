@@ -45,11 +45,12 @@ export default class MotionHelper {
 			if (!data.inputsBlockedByCollision) {
 				// calculate acceleration by user inputs
 				const acceleration: Vector = new Vector(0, 0);
-				if (data.inputs.UP) acceleration.y -= data.acceleration;
-				if (data.inputs.DOWN) acceleration.y += data.acceleration;
-				if (data.inputs.LEFT) acceleration.x -= data.acceleration;
-				if (data.inputs.RIGHT) acceleration.x += data.acceleration;
-				data.velocity.add(acceleration);
+				if (data.inputs.UP) acceleration.y -= 1;
+				if (data.inputs.DOWN) acceleration.y += 1;
+				if (data.inputs.LEFT) acceleration.x -= 1;
+				if (data.inputs.RIGHT) acceleration.x += 1;
+
+				data.velocity.add(acceleration.setMag(data.acceleration));
 			}
 
 			// apply friction (this also prevents the player from gaining more velocity than intended)
@@ -80,6 +81,10 @@ export default class MotionHelper {
 			if (modifier.type === 'ACCELERATION') {
 				playerData.acceleration *= modifier.value;
 			}
+
+			if (modifier.type === 'MONSTERBOOST') {
+				playerData.acceleration *= modifier.value;
+			}
 		}
 	}
 
@@ -90,8 +95,8 @@ export default class MotionHelper {
 		if (bouncyWalls) {
 			const isHorizontalLine = collidedLine.start.x === collidedLine.end.x;
 			playerData.velocity.mul(
-				isHorizontalLine ? -1.5 : 1,
-				isHorizontalLine ? 1 : -1.5
+				isHorizontalLine ? -1.2 : 1,
+				isHorizontalLine ? 1 : -1.2
 			);
 		} else {
 			playerData.velocity.mul(0.3);

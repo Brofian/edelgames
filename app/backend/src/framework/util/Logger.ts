@@ -1,3 +1,5 @@
+import serverConfiguration from './ServerConfiguration';
+
 export class Logger {
 	constructor(section = 'SYSTEM') {
 		this.section = section;
@@ -13,8 +15,7 @@ export class Logger {
 
 	private initializeLogger(): void {
 		if (!this.loggerInitialized) {
-			Logger.LOG_LEVEL =
-				(Number.parseInt(process.env.LOG_LEVEL) || undefined) ?? 0;
+			Logger.LOG_LEVEL = serverConfiguration.logLevel;
 			this.loggerInitialized = true;
 		}
 	}

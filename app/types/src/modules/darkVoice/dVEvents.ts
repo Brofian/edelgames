@@ -1,4 +1,10 @@
-import { ControlKey, MazeGrid, PlayerPosition } from './dVTypes';
+import {
+	ControlKey,
+	GameProgressState,
+	MazeGrid,
+	PlayerPosition,
+	PlayerScore,
+} from './dVTypes';
 import { EventDataObject } from '../../app/ApiTypes';
 
 export interface PlayerInputChangedEventData extends EventDataObject {
@@ -16,7 +22,6 @@ export interface PlayerPositionsChangedEventData extends EventDataObject {
 
 export interface GameStateUpdateEventData extends EventDataObject {
 	monsterPlayerId: string;
-	scores: {
-		[playerId: string]: number;
-	};
+	scores: PlayerScore[];
+	gameProgressState: GameProgressState;
 }

@@ -238,7 +238,10 @@ export default class Vector {
 	 * @description Normalize this Vector to the unit distance of one
 	 */
 	public normalize(): Vector {
-		this.limit(1);
+		const mag = this.mag();
+		if (mag != 0) {
+			this.mul(1 / mag);
+		}
 		return this;
 	}
 

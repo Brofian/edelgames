@@ -3,7 +3,7 @@ import DrawingCanvas from '../../../framework/components/DrawingCanvas/DrawingCa
 import p5Types from 'p5';
 import {
 	ControlKey,
-	ControlKeyMap,
+	ControlKeyMap, GameProgressState,
 	MazeGrid,
 	PlayerPosition,
 } from '@edelgames/types/src/modules/darkVoice/dVTypes';
@@ -18,6 +18,8 @@ import {
 
 interface IProps {
 	api: ModuleApi;
+	gameProgressState: GameProgressState;
+	monsterPlayerId: string;
 }
 
 interface IState {}
@@ -25,7 +27,17 @@ interface IState {}
 const canvasWidth = 700;
 const canvasHeight = 700;
 const playerSize = 0.3 * 1.1; // tileSize * 0.3, then increase by 1.1 to draw a bigger sprite than hitbox
+
+const mazeColors: {[key in GameProgressState]: string} = {
+	BEGINNING: '#ceffaf',
+	MIDDLE: '#fff4af',
+	ENDGAME: '#ffa798'
+}
+const monsterColor: string = '#ec2d2d';
+const playerColor: string = '#334eff';
+
 export default class Maze extends Component<IProps, IState> {
+
 	protected bufferedMaze: p5Types.Graphics | undefined = undefined;
 	protected zoom: number = 1.2;
 	protected inputMap: ControlKeyMap = {
@@ -79,9 +91,12 @@ export default class Maze extends Component<IProps, IState> {
 	}
 
 	shouldComponentUpdate(
-		nextProps: Readonly<{}>,
+		nextProps: Readonly<IProps>,
 		nextState: Readonly<IState>
 	): boolean {
+		if (this.props.gameProgressState !== nextProps.gameProgressState) {
+			this.bufferedMaze = undefined;
+		}
 		return false;
 	}
 
@@ -133,6 +148,7 @@ export default class Maze extends Component<IProps, IState> {
 	setup(p5: p5Types): undefined {
 		//p5.frameRate(40);
 		p5.ellipseMode(p5.CENTER);
+		p5.textSize(16);
 		return undefined;
 	}
 
@@ -176,7 +192,8 @@ export default class Maze extends Component<IProps, IState> {
 				const oldPos = playerPos.coords;
 				const newPos = nextPlayerPos.coords;
 
-				const smoothedPos = p5
+				const smoothedPos = nextPlayerPos.teleport ? p5.createVector(newPos.x, newPos.y) :
+					p5
 					.createVector(oldPos.x, oldPos.y)
 					.lerp(p5.createVector(newPos.x, newPos.y), portionOfMoveToDisplay);
 
@@ -231,11 +248,13 @@ export default class Maze extends Component<IProps, IState> {
 			);
 
 			// draw locale player
-			p5.fill('#f00');
+			p5.stroke('#eee');
+			p5.fill(this.props.monsterPlayerId === this.localePlayerId ? monsterColor : playerColor);
 			p5.circle(0, 0, this.playerSize);
-			p5.fill('#33f');
 
 			for (const otherPos of playerPositionList) {
+				p5.fill(this.props.monsterPlayerId === otherPos.playerId ? monsterColor : playerColor);
+
 				p5.circle(
 					(otherPos.coords.x - localePlayerPos.x) / this.zoom,
 					(otherPos.coords.y - localePlayerPos.y) / this.zoom,
@@ -245,8 +264,9 @@ export default class Maze extends Component<IProps, IState> {
 		}
 		p5.pop();
 
-		p5.stroke(255);
-		p5.text(Math.floor(p5.frameRate()), 50, 50);
+		p5.noStroke();
+		p5.fill(255);
+		p5.text(Math.floor(p5.frameRate()), 5, 21);
 
 		return undefined; // return type to match p5 standards
 	}
@@ -275,7 +295,7 @@ export default class Maze extends Component<IProps, IState> {
 		}
 
 		// draw tiles
-		graphics.stroke('#000');
+		graphics.stroke(mazeColors[this.props.gameProgressState]);
 		graphics.noFill();
 		for (let x = 0; x < this.maze.length; x++) {
 			for (let y = 0; y < this.maze[x].length; y++) {
