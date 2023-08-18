@@ -1,6 +1,7 @@
 import ModuleGame from '../../framework/modules/ModuleGame';
 import {
 	GameStateUpdateEventData,
+	ItemPositionsChangedEventData,
 	MazeLayoutChangedEventData,
 	PlayerInputChangedEventData,
 	PlayerPositionsChangedEventData,
@@ -15,6 +16,7 @@ import MotionHelper from './helper/MotionHelper';
 import Line from '../../framework/math/Geometry/Line';
 import PlayerHelper from './helper/PlayerHelper';
 import MonsterHelper from './helper/MonsterHelper';
+import ItemHelper from './helper/ItemHelper';
 
 /*
  * The actual game instance, that controls and manages the game
@@ -26,6 +28,7 @@ export default class DarkVoiceGame extends ModuleGame {
 
 	private playerHelper: PlayerHelper;
 	private monsterHelper: MonsterHelper;
+	private itemHelper: ItemHelper;
 	private motionHelper: MotionHelper;
 
 	onGameInitialize(): void {
@@ -49,7 +52,13 @@ export default class DarkVoiceGame extends ModuleGame {
 			this.api.getPlayerApi().getRoomMembers()
 		);
 		this.monsterHelper = new MonsterHelper(this.playerHelper, playerSize * 0.6);
-		this.motionHelper = new MotionHelper(this.playerHelper);
+		this.motionHelper = new MotionHelper(sWidth, sHeight, this.playerHelper);
+		this.itemHelper = new ItemHelper(
+			sWidth,
+			sHeight,
+			this.playerHelper,
+			this.monsterHelper
+		);
 
 		this.sendMazeUpdate();
 		this.sendPlayerPositions();
@@ -73,16 +82,28 @@ export default class DarkVoiceGame extends ModuleGame {
 
 	gameLoop(): void {
 		this.monsterHelper.checkMonsterPlayerCollision();
+		this.itemHelper.checkPlayerItemCollision();
 		this.motionHelper.updatePlayerPositionsFromInputs(this.mazeBorderList);
 		// send data to players
 		this.sendPlayerPositions();
 		this.sendGameStateUpdate();
+		if (this.itemHelper.didItemsChange()) {
+			this.sendItemPositions();
+		}
+
+		// todo: send changes in modifiers to the player to display them accordingly
 	}
 
 	sendPlayerPositions(): void {
 		this.api.getEventApi().sendRoomMessage('playerPositionsChanged', {
 			positions: this.playerHelper.getPlayerPositions(),
 		} as PlayerPositionsChangedEventData);
+	}
+
+	sendItemPositions(): void {
+		this.api.getEventApi().sendRoomMessage('itemPositionsChanged', {
+			items: this.itemHelper.getItemList(),
+		} as ItemPositionsChangedEventData);
 	}
 
 	sendMazeUpdate(): void {

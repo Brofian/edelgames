@@ -4,7 +4,7 @@ import p5Types from 'p5';
 import {
 	ControlKey,
 	ControlKeyMap,
-	GameProgressState,
+	GameProgressState, ItemObject,
 	MazeGrid,
 	PlayerPosition,
 } from '@edelgames/types/src/modules/darkVoice/dVTypes';
@@ -12,10 +12,14 @@ import ModuleApi from '../../../framework/modules/ModuleApi';
 import { Coordinate } from '@edelgames/types/src/modules/colorChecker/CCTypes';
 import { EventDataObject } from '@edelgames/types/src/app/ApiTypes';
 import {
+	ItemPositionsChangedEventData,
 	MazeLayoutChangedEventData,
 	PlayerInputChangedEventData,
 	PlayerPositionsChangedEventData,
 } from '@edelgames/types/src/modules/darkVoice/dVEvents';
+import EyeEvilSvg from '../images/eye-evil.svg';
+import TurtleSvg from '../images/turtle.svg';
+import RabbitRunningSvg from '../images/rabbit-running.svg';
 
 interface IProps {
 	api: ModuleApi;
@@ -56,6 +60,12 @@ export default class Maze extends Component<IProps, IState> {
 	protected maze: MazeGrid | undefined = undefined;
 	protected mazeLayoutRequested = 0;
 	protected readonly localePlayerId: string;
+	protected items: ItemObject[] = [];
+	protected canvasImages: {[key: string]: p5Types.Image|undefined} = {
+		monsterizer: undefined,
+		accelerator: undefined,
+		slowdown: undefined,
+	};
 
 	constructor(props: IProps) {
 		super(props);
@@ -75,6 +85,12 @@ export default class Maze extends Component<IProps, IState> {
 				'playerPositionsChanged',
 				this.onPlayerPositionsChanged.bind(this)
 			);
+		this.props.api
+			.getEventApi()
+			.addEventHandler(
+				'itemPositionsChanged',
+				this.onItemPositionsChanged.bind(this)
+			)
 	}
 
 	private keyDownListener = this.onInputChanged.bind(this, true);
@@ -145,10 +161,19 @@ export default class Maze extends Component<IProps, IState> {
 		this.frameSinceTick = 0;
 	}
 
+	onItemPositionsChanged(eventData: EventDataObject): void {
+		const event = eventData as ItemPositionsChangedEventData;
+		this.items = event.items;
+	}
+
 	setup(p5: p5Types): undefined {
 		//p5.frameRate(40);
 		p5.ellipseMode(p5.CENTER);
 		p5.textSize(16);
+		// preload images
+		p5.loadImage(EyeEvilSvg, img => { this.canvasImages['monsterizer'] = img });
+		p5.loadImage(RabbitRunningSvg, img => { this.canvasImages['accelerator'] = img;	});
+		p5.loadImage(TurtleSvg, img => { this.canvasImages['slowdown'] = img;	});
 		return undefined;
 	}
 
@@ -251,6 +276,22 @@ export default class Maze extends Component<IProps, IState> {
 				-localePlayerPos.y / this.zoom
 			);
 
+			// draw items
+			for (const item of this.items) {
+				const icon = this.canvasImages[item.identifier]
+				if (icon) {
+					const iconPosition = this.absoluteCoordsToRelative({
+						x: item.position.x - 0.15,
+						y: item.position.y - 0.15,
+					});
+					p5.image(icon,
+						(iconPosition.x - localePlayerPos.x) / this.zoom,
+						(iconPosition.y - localePlayerPos.y) / this.zoom,
+						this.playerSize,
+						this.playerSize);
+				}
+			}
+
 			// draw locale player
 			p5.stroke('#eee');
 			p5.fill(
@@ -293,12 +334,16 @@ export default class Maze extends Component<IProps, IState> {
 		return coords.map((playerCoord) => {
 			return {
 				playerId: playerCoord.playerId,
-				coords: {
-					x: playerCoord.coords.x * this.zoom * this.tileSize,
-					y: playerCoord.coords.y * this.zoom * this.tileSize,
-				},
+				coords: this.absoluteCoordsToRelative(playerCoord.coords),
 			};
 		});
+	}
+
+	absoluteCoordsToRelative(coords: Coordinate): Coordinate {
+		return {
+			x: coords.x * this.zoom * this.tileSize,
+			y: coords.y * this.zoom * this.tileSize,
+		};
 	}
 
 	createBufferedMaze(p5: p5Types, graphics: p5Types.Graphics): void {

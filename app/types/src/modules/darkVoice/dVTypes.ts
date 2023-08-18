@@ -21,6 +21,7 @@ export type PlayerModifierType = 'ACCELERATION' | 'RANGE' | 'MONSTERBOOST';
 export type PlayerModifier = {
 	type: PlayerModifierType;
 	value: number;
+	timer?: number;
 };
 
 export type ControlKey = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
@@ -31,4 +32,9 @@ export type ControlKeyMap = {
 export type PlayerScore = {
 	playerId: string;
 	score: number;
+};
+
+export type ItemObject = {
+	identifier: string;
+	position: Coordinate;
 };

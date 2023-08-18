@@ -1,6 +1,7 @@
 import {
 	ControlKey,
 	GameProgressState,
+	ItemObject,
 	MazeGrid,
 	PlayerPosition,
 	PlayerScore,
@@ -18,6 +19,10 @@ export interface MazeLayoutChangedEventData extends EventDataObject {
 
 export interface PlayerPositionsChangedEventData extends EventDataObject {
 	positions: PlayerPosition[];
+}
+
+export interface ItemPositionsChangedEventData extends EventDataObject {
+	items: ItemObject[];
 }
 
 export interface GameStateUpdateEventData extends EventDataObject {

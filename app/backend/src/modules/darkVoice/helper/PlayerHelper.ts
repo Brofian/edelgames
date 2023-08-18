@@ -156,7 +156,9 @@ export default class PlayerHelper {
 			return;
 		} else if (existingModifier !== undefined) {
 			// remove old modifier
-			playerData.modifier.filter((mod) => mod !== existingModifier);
+			playerData.modifier = playerData.modifier.filter(
+				(mod) => mod.type !== existingModifier.type
+			);
 		}
 
 		playerData.modifier.push(modifier);
@@ -175,6 +177,10 @@ export default class PlayerHelper {
 		modifierType: PlayerModifierType
 	): void {
 		playerData.modifier.filter((mod) => mod.type !== modifierType);
+	}
+
+	public removeAllPlayerModifiers(playerData: PlayerData): void {
+		playerData.modifier = [];
 	}
 
 	public getPlayerModifierById(

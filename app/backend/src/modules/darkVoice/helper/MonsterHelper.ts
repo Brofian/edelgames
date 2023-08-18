@@ -20,6 +20,7 @@ export default class MonsterHelper {
 	public setMonster(playerId: string): void {
 		this.playerHelper.removePlayerModifier(this.monsterData, 'MONSTERBOOST');
 		this.monsterData = this.playerHelper.getPlayerDataById(playerId);
+		this.playerHelper.removeAllPlayerModifiers(this.monsterData);
 		this.playerHelper.addPlayerModifier(this.monsterData, {
 			type: 'MONSTERBOOST',
 			value: 1.5,

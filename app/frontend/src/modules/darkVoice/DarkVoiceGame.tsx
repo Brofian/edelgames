@@ -32,14 +32,17 @@ export default class DarkVoiceGame
 	constructor(props: {}) {
 		super(props);
 		this.api = new ModuleApi(darkVoice, this);
+	}
+
+	componentDidMount() {
 		this.api
 			.getEventApi()
 			.addEventHandler('gameStateUpdate', this.onGameStateUpdated.bind(this));
 	}
 
-	componentDidMount() {}
-
-	componentWillUnmount() {}
+	componentWillUnmount() {
+		this.api.getEventApi().removeEvent('gameStateUpdate');
+	}
 
 	onGameStateUpdated(eventData: EventDataObject): void {
 		const event = eventData as GameStateUpdateEventData;

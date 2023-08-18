@@ -1,4 +1,7 @@
-import { ControlKey } from '@edelgames/types/src/modules/darkVoice/dVTypes';
+import {
+	ControlKey,
+	PlayerModifier,
+} from '@edelgames/types/src/modules/darkVoice/dVTypes';
 import Vector from '../../../framework/math/Geometry/Vector';
 import CollisionHelper from './CollisionHelper';
 import Line from '../../../framework/math/Geometry/Line';
@@ -7,8 +10,10 @@ import PlayerHelper, { PlayerData } from './PlayerHelper';
 export default class MotionHelper {
 	private readonly playerHelper: PlayerHelper;
 	private readonly friction: number;
+	private readonly sWidth: number;
+	private readonly sHeight: number;
 
-	constructor(playerHelper: PlayerHelper) {
+	constructor(sWidth: number, sHeight: number, playerHelper: PlayerHelper) {
 		this.playerHelper = playerHelper;
 
 		// friction should cancel out the default acceleration at maxSpeed
@@ -38,7 +43,11 @@ export default class MotionHelper {
 		return ['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(key);
 	}
 
+	private a = 0;
+
 	updatePlayerPositionsFromInputs(mazeBorders: Line[]): void {
+		this.a++;
+
 		for (const data of this.playerHelper.getPlayerData()) {
 			this.applyPlayerModifiers(data);
 
@@ -85,6 +94,18 @@ export default class MotionHelper {
 			if (modifier.type === 'MONSTERBOOST') {
 				playerData.acceleration *= modifier.value;
 			}
+
+			// remove old timers from the list
+			if (modifier.timer !== null) {
+				modifier.timer--;
+
+				if (modifier.timer < 0) {
+					// I sure hope, javascript copies the iterated array...
+					playerData.modifier = playerData.modifier.filter(
+						(mod) => mod !== modifier
+					);
+				}
+			}
 		}
 	}
 
@@ -112,6 +133,14 @@ export default class MotionHelper {
 
 		const nextPosition: Vector = Vector.add(oldPosition, motion);
 		const distanceTravelled = nextPosition.dist(oldPosition);
+
+		if (distanceTravelled > 999) {
+			console.log('warning:', motion, distanceTravelled);
+			playerData.velocity.x = 0;
+			playerData.velocity.y = 0;
+			return oldPosition;
+		}
+
 		// attempt 5 collision steps, with the predicate:
 		// 0.01 <= collisionStepSize <= 0.3
 		const collisionStepSize = Math.max(
@@ -138,6 +167,8 @@ export default class MotionHelper {
 				calculatedEndPosition = lerpedPosition;
 				continue;
 			}
+
+			console.log('loop portions', i);
 
 			// check collision at portions of the distance
 			for (const precision of [0.5, 0.25, 0.125]) {
@@ -183,6 +214,13 @@ export default class MotionHelper {
 			if (isHit) {
 				return line;
 			}
+		}
+
+		if (playerPos.x < 0 || playerPos.x > this.sWidth) {
+			return new Line(new Vector(0, 0), new Vector(0, 1));
+		}
+		if (playerPos.y < 0 || playerPos.y > this.sWidth) {
+			return new Line(new Vector(0, 0), new Vector(1, 0));
 		}
 
 		return false;
