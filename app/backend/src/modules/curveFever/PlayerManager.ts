@@ -32,7 +32,7 @@ export default class PlayerManager {
      * A collection of the lines that were created in this tick
      * @private
      */
-    private linesBuffer: Line[]
+    private linesBuffer: Line[] = [];
 
     createPlayerData(
         playerId: string,
@@ -68,6 +68,7 @@ export default class PlayerManager {
         this.linesBuffer.length = 0;
 
         const rotationalDistance: number = 0.1;
+        const arenaSize: Vector = Vector.create(600,400);
 
         for (const playerId of this.registeredPlayerIds) {
             const data = this.data[playerId];
@@ -94,9 +95,11 @@ export default class PlayerManager {
             data.velocity.scale(0.9);
 
             // do collision checks
-            this.checkLineCollision(data.position, 10);
+            data.dead = this.checkLineCollision(data.position, 10);
 
-            const line: Line = Line.create(prevPosition, data.position);
+            const line: Line = Line.create(prevPosition, data.position.copy());
+            data.position.mod(arenaSize);
+
             this.linesBuffer.push(line);
         }
 
@@ -116,6 +119,7 @@ export default class PlayerManager {
                 continue;
             }
 
+            // TODO lineToPoint distance calculation seems to be incorrect
             if (line.distToPoint(position) <= radius) {
                 return true;
             }

@@ -92,6 +92,20 @@ export default class Vector {
         return Math.sqrt(this.magSq());
     }
 
+    mod(m: Vector): Vector {
+        if (this.x > 0) this.x %= m.x;
+        else {
+            this.x = (this.x + (Math.ceil(Math.abs(this.x / m.x)) * m.x)) % m.x;
+        }
+
+        if (this.y > 0) this.y %= m.y;
+        else {
+            this.y = (this.y + (Math.ceil(Math.abs(this.y / m.y)) * m.y)) % m.y;
+        }
+
+        return this;
+    }
+
     dot(other: Vector): number {
         return (this.x*other.x) + (this.y*other.y)
     }
@@ -166,5 +180,7 @@ export default class Vector {
     angleBetween(other: Vector): number {
         return Math.acos(this.dot(other));
     }
+
+
 
 }

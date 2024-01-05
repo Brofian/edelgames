@@ -9,19 +9,17 @@ import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
  */
 export default class CurveFeverGame extends ModuleGame {
 
-	width: number = 1000;
-	height: number = 1000;
+	width: number = 600;
+	height: number = 400;
 
 	players: PlayerManager = new PlayerManager();
 	clientConnector: ClientConnector;
 
-	constructor() {
-		super();
+	onGameInitialize(): void {
 		this.clientConnector = new ClientConnector(this.players, this.api);
 		this.api.getUtilApi().getTimer().startInterval('tick', this.onTick.bind(this), 50);
-	}
 
-	onGameInitialize(): void {
+
 		const fieldMinPosition = Vector.create(0,0);
 		const fieldMaxPosition = Vector.create(this.width,this.height);
 

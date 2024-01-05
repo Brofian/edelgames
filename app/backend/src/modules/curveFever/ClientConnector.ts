@@ -1,5 +1,9 @@
 import PlayerManager from "./PlayerManager";
 import ModuleApi from "../../framework/modules/ModuleApi";
+import {
+    OnLineBufferUpdateEventData,
+    OnPlayerPositionUpdateEventData
+} from "@edelgames/types/src/modules/curveFever/CFEvents";
 
 
 const OutgoingEventNames = {
@@ -29,21 +33,25 @@ export default class ClientConnector {
     private sendPlayerPositions(): void {
         this.api.getEventApi().sendRoomMessage(
             OutgoingEventNames.playerPositionUpdate,
-            this.api.getPlayerApi().getRoomMembers().map((player) => {
-                const playerData = this.players.getPlayerData(player.getId());
-                return {
-                    playerId: player.getId(),
-                    position: playerData.position,
-                    rotation: playerData.rotation
-                };
-            })
+            {
+                playerData: this.api.getPlayerApi().getRoomMembers().map((player) => {
+                    const playerData = this.players.getPlayerData(player.getId());
+                    return {
+                        playerId: player.getId(),
+                        position: playerData.position,
+                        rotation: playerData.rotation
+                    };
+                })
+            } as OnPlayerPositionUpdateEventData
         );
     }
 
     private sendCreatedLines(): void {
         this.api.getEventApi().sendRoomMessage(
             OutgoingEventNames.lineBufferUpdate,
-            this.players.getLineBuffer().map(line => line.toObject())
+            {
+                lineBuffer: this.players.getLineBuffer().map(line => line.toObject())
+            } as OnLineBufferUpdateEventData
         );
     }
 
