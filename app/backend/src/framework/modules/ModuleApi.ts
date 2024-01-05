@@ -72,6 +72,13 @@ export default class ModuleApi {
 	}
 
 	/**
+	 * @description Returns the specialized API Object for game utils
+	 */
+	public getUtilApi(): ModuleUtilApi {
+		return this.utilApi;
+	}
+
+	/**
 	 * @description This will cancel / stop / end the current game instance and return the members back to the game select (idle) room
 	 */
 	public cancelGame(): void {

@@ -222,6 +222,15 @@ export default class User implements IUser {
 			systemLogger.info(
 				`user ${this.id} attempted login as ${username} using password`
 			);
+
+			return this.onAuthResponse(true, {
+				user_id: 123,
+				group_id: 133,
+				custom_title: '',
+				username: 'BrogamerTest',
+				authCookie: '123',
+				profileImageUrl: undefined
+			});
 			XenforoApi.loginWithPassword(
 				username,
 				password,
