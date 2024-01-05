@@ -28,7 +28,7 @@ export default class ModuleEventApi {
 	/**
 	 * @internal
 	 */
-	public onServerToClientMessageEventNotified(eventData?: EventDataObject) {
+	private onServerToClientMessageEventNotified(eventData?: EventDataObject) {
 		if (!eventData) {
 			return;
 		}
