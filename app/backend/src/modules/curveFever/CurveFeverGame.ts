@@ -12,6 +12,8 @@ export default class CurveFeverGame extends ModuleGame {
 	width: number = 600;
 	height: number = 400;
 
+	tick: number = 0;
+
 	players: PlayerManager = new PlayerManager();
 	clientConnector: ClientConnector;
 
@@ -38,8 +40,10 @@ export default class CurveFeverGame extends ModuleGame {
 	}
 
 	onTick(): void {
+		this.tick++;
+
 		// TODO do calculations
-		this.players.calculateStep();
+		this.players.calculateStep(this.tick);
 
 		// TODO send client updates
 		this.clientConnector.updateClients();

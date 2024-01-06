@@ -1,5 +1,5 @@
 import {VectorObj} from "../../../framework/structures/Vector";
-import {LineObj} from "../../../framework/structures/Line";
+import {CFLine} from "@edelgames/types/src/modules/curveFever/CFEvents";
 
 type PlayerData = {
     playerId: string;
@@ -16,7 +16,7 @@ export default class GameStateManager {
     private registeredPlayerIds: string[] = [];
     private playerData: PlayerDataStorage = {};
 
-    private lineBuffer: LineObj[] = [];
+    private lineBuffer: CFLine[] = [];
 
     getPlayerData(playerId: string): PlayerData|undefined {
         return (playerId in this.playerData) ? this.playerData[playerId] : undefined;
@@ -31,11 +31,11 @@ export default class GameStateManager {
         return this.registeredPlayerIds;
     }
 
-    setLineBuffer(buffer: LineObj[]): void {
+    setLineBuffer(buffer: CFLine[]): void {
         this.lineBuffer = buffer;
     }
 
-    getLineBuffer(): LineObj[] {
+    getLineBuffer(): CFLine[] {
         const buffer = [...this.lineBuffer];
         this.lineBuffer.length = 0;
         return buffer;

@@ -1,6 +1,7 @@
 import PlayerManager from "./PlayerManager";
 import ModuleApi from "../../framework/modules/ModuleApi";
 import {
+    CFLine,
     OnLineBufferUpdateEventData,
     OnPlayerPositionUpdateEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
@@ -50,7 +51,13 @@ export default class ClientConnector {
         this.api.getEventApi().sendRoomMessage(
             OutgoingEventNames.lineBufferUpdate,
             {
-                lineBuffer: this.players.getLineBuffer().map(line => line.toObject())
+                lineBuffer: this.players.getLineBuffer().map(line => {
+                    return {
+                        thickness: line.thickness,
+                        line: line.line,
+                        playerId: line.playerId
+                    } as CFLine;
+                })
             } as OnLineBufferUpdateEventData
         );
     }

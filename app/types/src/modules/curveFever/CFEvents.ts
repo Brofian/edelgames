@@ -12,6 +12,12 @@ export type OnPlayerPositionUpdateEventData = {
 	}[]
 };
 
+export type CFLine = {
+	thickness: number;
+	line: LineObj;
+	playerId: string;
+};
+
 export type OnLineBufferUpdateEventData = {
-	lineBuffer: LineObj[]
+	lineBuffer: CFLine[]
 };

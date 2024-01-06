@@ -12,6 +12,8 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
 
     lineLayer?: p5Types.Graphics;
 
+    colorLookup: {[key: string]: [number,number,number]} = {};
+
     preload(p5: p5Types): void {}
 
     setup(p5: p5Types): void {
@@ -26,9 +28,22 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
 
         // draw new lines to lineLayer
         const lineBuffer = this.props.gameState.getLineBuffer();
-        this.lineLayer.stroke(200,0,0);
         for (const line of lineBuffer) {
-            this.lineLayer.line(line.start.x, line.start.y, line.end.x, line.end.y);
+
+            if (!(line.playerId in this.colorLookup)) {
+                const n = parseInt(line.playerId, 36)*262144;
+                this.colorLookup[line.playerId] = [(n%4289%255), (n%3583%255), (n%5393%255)];
+            }
+            const col = this.colorLookup[line.playerId];
+            this.lineLayer.stroke(...col);
+
+            this.lineLayer.strokeWeight(line.thickness * 2);
+            this.lineLayer.line(
+                line.line.start.x,
+                line.line.start.y,
+                line.line.end.x,
+                line.line.end.y
+            );
         }
 
 

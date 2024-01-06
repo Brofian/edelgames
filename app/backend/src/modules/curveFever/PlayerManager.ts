@@ -14,7 +14,15 @@ export type PlayerData = {
     rotation: number;
     inputs: InputData;
     dead: boolean;
+    invincibilityTicks: number;
 }
+
+type GeneratedLine = {
+    line: Line,
+    tick: number,
+    thickness: number,
+    playerId: string
+};
 
 type PlayerDataStorage = {[key: string]: PlayerData};
 
@@ -27,12 +35,12 @@ export default class PlayerManager {
      * A collection of all drawn lines
      * @private
      */
-    private generatedLines: Line[] = [];
+    private generatedLines: GeneratedLine[] = [];
     /**
      * A collection of the lines that were created in this tick
      * @private
      */
-    private linesBuffer: Line[] = [];
+    private linesBuffer: GeneratedLine[] = [];
 
     createPlayerData(
         playerId: string,
@@ -49,7 +57,8 @@ export default class PlayerManager {
               up: false,
               down: false,
             },
-            dead: false
+            dead: false,
+            invincibilityTicks: 20
         };
         this.data[playerId] = playerData;
         this.registeredPlayerIds.push(playerId);
@@ -60,11 +69,11 @@ export default class PlayerManager {
         return (playerId in this.data) ? this.data[playerId] : undefined;
     }
 
-    getLineBuffer(): Line[] {
+    getLineBuffer(): GeneratedLine[] {
         return this.linesBuffer;
     }
 
-    calculateStep(): void {
+    calculateStep(tick: number): void {
         this.linesBuffer.length = 0;
 
         const rotationalDistance: number = 0.1;
@@ -86,7 +95,7 @@ export default class PlayerManager {
             }
 
             // apply new velocity according to rotation automatically
-            const acceleration: Vector = Vector.fromAngle(data.rotation);
+            const acceleration: Vector = Vector.fromAngle(data.rotation).setMag(1);
             data.velocity.add(acceleration);
             data.velocity.limit(5);
 
@@ -95,32 +104,40 @@ export default class PlayerManager {
             data.velocity.scale(0.9);
 
             // do collision checks
-            data.dead = this.checkLineCollision(data.position, 10);
+            if (data.invincibilityTicks > 0) {
+                data.invincibilityTicks--;
+            }
+            else if (data.velocity.mag() >= 4.4) {
+                data.dead = this.checkLineCollision(tick, data.position, 5);
+            }
+
 
             const line: Line = Line.create(prevPosition, data.position.copy());
             data.position.mod(arenaSize);
 
-            this.linesBuffer.push(line);
+            this.linesBuffer.push({
+                line: line,
+                tick: tick,
+                thickness: 5,
+                playerId: playerId
+            });
         }
 
         this.generatedLines.push(...this.linesBuffer);
     }
 
-    checkLineCollision(position: Vector, radius: number): boolean {
-        // do quick endpoint distance checks before doing heavy line distance checks
-        // this is the maximum distance, the player could have moved since the last step
-        const maxDistPerStepSqr = 10*10;
+    checkLineCollision(currentTick: number, position: Vector, radius: number): boolean {
 
-        for (const line of this.generatedLines) {
-            const startDist = line.start.distSqr(position);
-            const endDist = line.end.distSqr(position);
-            if (startDist > maxDistPerStepSqr && endDist > maxDistPerStepSqr) {
-                // this line is probably to far away
+        for (const generatedLine of this.generatedLines) {
+            if (generatedLine.tick > currentTick-5) {
                 continue;
             }
 
-            // TODO lineToPoint distance calculation seems to be incorrect
-            if (line.distToPoint(position) <= radius) {
+            const line = generatedLine.line;
+
+            const d = line.distToPoint(position);
+            const hitDistance = (radius + generatedLine.thickness);
+            if (d < hitDistance) {
                 return true;
             }
         }

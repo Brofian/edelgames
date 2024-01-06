@@ -111,11 +111,11 @@ export default class Vector {
     }
 
     distSqr(other: Vector): number {
-        return this.dot(other);
+        return Math.pow(this.x-other.x, 2) + Math.pow(this.y-other.y, 2);
     }
 
     dist(other: Vector): number {
-        return Math.sqrt(this.dot(other));
+        return Math.sqrt(this.distSqr(other));
     }
 
     normalize(): Vector {
@@ -127,7 +127,7 @@ export default class Vector {
     }
 
     limit(l: number): Vector {
-        const total = Math.abs(this.x + this.y);
+        const total = this.mag();
         if (total > l) {
             this.scale(l/total);
         }

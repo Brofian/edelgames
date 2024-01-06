@@ -34,16 +34,21 @@ export default class Line {
     }
 
     distToPoint(point: Vector): number {
-        const numerator: number = Math.abs(
-            (this.end.x-this.start.x)*(this.start.y-point.y) -
-            (this.start.x-point.x)*(this.end.y-this.start.y)
-        );
-        const denominator: number = Math.sqrt(
-            Math.pow(this.end.x-this.start.x,2) +
-            Math.pow(this.end.y-this.start.y,2)
-        );
-
-        return numerator/denominator;
+        const l2 = this.start.distSqr(this.end);
+        if (l2 === 0) {
+            return point.dist(this.start);
+        }
+        else {
+            let t = (
+                (point.x - this.end.x) * (this.start.x - this.end.x) +
+                (point.y - this.end.y) * (this.start.y - this.end.y)
+            ) / l2;
+            t = Math.max(0, Math.min(t, 1));
+            return point.dist(Vector.create(
+                this.end.x + t * (this.start.x - this.end.x),
+                this.end.y + t * (this.start.y - this.end.y)
+            ));
+        }
     }
 
 }
