@@ -2,6 +2,9 @@ import p5Types from "p5";
 import AbstractCanvas, {DefaultCanvasProps} from "../../../framework/components/DrawingCanvas/AbstractCanvas";
 import ServerConnector from "./ServerConnector";
 import GameStateManager from "./GameStateManager";
+import {InputData} from "@edelgames/types/src/modules/curveFever/CFEvents";
+import {SketchProps} from "react-p5";
+import type P5 from "p5";
 
 interface IProps extends DefaultCanvasProps {
     connector: ServerConnector,
@@ -14,10 +17,54 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
 
     colorLookup: {[key: string]: [number,number,number]} = {};
 
+    inputs: InputData = {
+        right: false,
+        left: false,
+        up: false,
+        down: false,
+    };
+
+    additionalSketchProps: Partial<SketchProps> = {
+        keyPressed: this.keyPressed.bind(this),
+        keyReleased: this.keyReleased.bind(this)
+    }
+
+    keyPressed(p5: P5, event?: UIEvent): void {
+        if (!event) return;
+        const keyboardEvent = event as KeyboardEvent;
+        this.setKey(keyboardEvent.key, true);
+    }
+
+    keyReleased(p5: P5, event?: UIEvent): void {
+        if (!event) return;
+        const keyboardEvent = event as KeyboardEvent;
+        this.setKey(keyboardEvent.key, false);
+    }
+
+    setKey(key: string, isKeyDown: boolean): void {
+        switch (key) {
+            case 'w':
+                this.inputs.up = isKeyDown;
+                break;
+            case 'a':
+                this.inputs.left = isKeyDown;
+                break;
+            case 's':
+                this.inputs.down = isKeyDown;
+                break;
+            case 'd':
+                this.inputs.right = isKeyDown;
+                break;
+        }
+
+        this.props.connector.sendInputChangeEvent(this.inputs);
+    }
+
     preload(p5: p5Types): void {}
 
     setup(p5: p5Types): void {
         p5.smooth();
+        p5.colorMode(p5.HSB);
         this.lineLayer = p5.createGraphics(this.props.width, this.props.height);
     }
 
@@ -30,12 +77,7 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
         const lineBuffer = this.props.gameState.getLineBuffer();
         for (const line of lineBuffer) {
 
-            if (!(line.playerId in this.colorLookup)) {
-                const n = parseInt(line.playerId, 36)*262144;
-                this.colorLookup[line.playerId] = [(n%4289%255), (n%3583%255), (n%5393%255)];
-            }
-            const col = this.colorLookup[line.playerId];
-            this.lineLayer.stroke(...col);
+            this.lineLayer.stroke(line.color, 80, 70);
 
             this.lineLayer.strokeWeight(line.thickness * 2);
             this.lineLayer.line(
@@ -59,7 +101,6 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
             }
             p5.circle(data.position.x, data.position.y, 10);
         }
-
     }
 
 }

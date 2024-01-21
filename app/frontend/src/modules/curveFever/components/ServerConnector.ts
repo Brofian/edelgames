@@ -1,13 +1,14 @@
 import ModuleApi from "../../../framework/modules/ModuleApi";
 import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
 import {
+    InputData, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
     OnPlayerPositionUpdateEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
 import GameStateManager from "./GameStateManager";
 
 const OutgoingEventNames = {
-
+    inputChangedEvent: 'inputChangedEvent'
 }
 
 const IncomingEventNames = {
@@ -56,6 +57,14 @@ export default class ServerConnector {
         this.gameState.setLineBuffer(lineBufferData.lineBuffer);
     }
 
+    sendInputChangeEvent(inputs: InputData): void {
+        this.api.getEventApi().sendMessageToServer(
+            OutgoingEventNames.inputChangedEvent,
+            {
+                inputs: inputs
+            } as OnInputChangedEventData
+        );
+    }
 
 
 }

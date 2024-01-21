@@ -33,7 +33,7 @@ export default class ModuleEventApi {
 			return;
 		}
 
-		this.alertEvent(eventData.messageTypeId, eventData, true);
+		this.alertEvent(eventData.messageTypeId as string, eventData, true);
 	}
 
 	/*
