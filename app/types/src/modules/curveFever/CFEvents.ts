@@ -15,9 +15,20 @@ export type OnPlayerPositionUpdateEventData = {
 export type CFLine = {
 	thickness: number;
 	line: LineObj;
-	playerId: string;
+	color: number;
 };
 
 export type OnLineBufferUpdateEventData = {
 	lineBuffer: CFLine[]
+};
+
+export type InputData = {
+	left: boolean;
+	right: boolean;
+	up: boolean;
+	down: boolean;
+}
+
+export type OnInputChangedEventData = {
+	inputs: InputData
 };

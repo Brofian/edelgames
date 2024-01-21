@@ -1,12 +1,6 @@
 import Vector from "../../framework/structures/Vector";
 import Line, {LineObj} from "../../framework/structures/Line";
-
-export type InputData = {
-    left: boolean;
-    right: boolean;
-    up: boolean;
-    down: boolean;
-}
+import {InputData} from "@edelgames/types/src/modules/curveFever/CFEvents";
 
 export type PlayerData = {
     position: Vector,
@@ -15,13 +9,14 @@ export type PlayerData = {
     inputs: InputData;
     dead: boolean;
     invincibilityTicks: number;
+    color: number;
 }
 
 type GeneratedLine = {
     line: Line,
     tick: number,
     thickness: number,
-    playerId: string
+    color: number
 };
 
 type PlayerDataStorage = {[key: string]: PlayerData};
@@ -58,7 +53,8 @@ export default class PlayerManager {
               down: false,
             },
             dead: false,
-            invincibilityTicks: 20
+            invincibilityTicks: 20,
+            color: parseInt(playerId, 36)%360
         };
         this.data[playerId] = playerData;
         this.registeredPlayerIds.push(playerId);
@@ -76,7 +72,7 @@ export default class PlayerManager {
     calculateStep(tick: number): void {
         this.linesBuffer.length = 0;
 
-        const rotationalDistance: number = 0.1;
+        const rotationalDistance: number = 0.2;
         const arenaSize: Vector = Vector.create(600,400);
 
         for (const playerId of this.registeredPlayerIds) {
@@ -119,7 +115,7 @@ export default class PlayerManager {
                 line: line,
                 tick: tick,
                 thickness: 5,
-                playerId: playerId
+                color: data.color
             });
         }
 

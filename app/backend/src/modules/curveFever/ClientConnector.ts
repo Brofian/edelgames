@@ -1,10 +1,11 @@
 import PlayerManager from "./PlayerManager";
 import ModuleApi from "../../framework/modules/ModuleApi";
 import {
-    CFLine,
+    CFLine, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
     OnPlayerPositionUpdateEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
+import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
 
 
 const OutgoingEventNames = {
@@ -13,7 +14,7 @@ const OutgoingEventNames = {
 }
 
 const IncomingEventNames = {
-
+    inputChangedEvent: 'inputChangedEvent'
 }
 
 export default class ClientConnector {
@@ -24,6 +25,7 @@ export default class ClientConnector {
     constructor(players: PlayerManager, api: ModuleApi) {
         this.players = players;
         this.api = api;
+        this.api.getEventApi().addEventHandler(IncomingEventNames.inputChangedEvent, this.onPlayerInputChangedEvent.bind(this));
     }
 
     updateClients(): void {
@@ -48,18 +50,32 @@ export default class ClientConnector {
     }
 
     private sendCreatedLines(): void {
+        const lineBuffer = this.players.getLineBuffer();
+        if (lineBuffer.length === 0) {
+            return;
+        }
+
         this.api.getEventApi().sendRoomMessage(
             OutgoingEventNames.lineBufferUpdate,
             {
-                lineBuffer: this.players.getLineBuffer().map(line => {
+                lineBuffer: lineBuffer.map(line => {
                     return {
                         thickness: line.thickness,
                         line: line.line,
-                        playerId: line.playerId
+                        color: line.color
                     } as CFLine;
                 })
             } as OnLineBufferUpdateEventData
         );
+    }
+
+    private onPlayerInputChangedEvent(eventData: EventDataObject): void {
+        const {inputs} = eventData as OnInputChangedEventData;
+
+        const playerData = this.players.getPlayerData(eventData.senderId);
+        if (playerData) {
+            playerData.inputs = inputs;
+        }
     }
 
 }

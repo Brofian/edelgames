@@ -11,7 +11,10 @@ export type authDataContainer = {
 };
 
 // the data carried by an event on publish
-export type EventDataObject = anyObject;
+export type EventDataObject = {
+	senderId?: string|undefined;
+	messageTypeId?: string|undefined;
+} & anyObject;
 
 export type EventHandlerFunction = (eventData: EventDataObject) => void;
 
