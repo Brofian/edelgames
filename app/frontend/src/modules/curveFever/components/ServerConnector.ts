@@ -1,6 +1,7 @@
 import ModuleApi from "../../../framework/modules/ModuleApi";
 import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
 import {
+    GeneralGameStateEventData,
     InputData, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
     OnPlayerPositionUpdateEventData
@@ -14,6 +15,7 @@ const OutgoingEventNames = {
 const IncomingEventNames = {
     playerPositionUpdate: 'playerPositionUpdate',
     lineBufferUpdate: 'lineBufferUpdate',
+    gameStateUpdate: 'gameStateUpdate',
 }
 
 export default class ServerConnector {
@@ -26,6 +28,12 @@ export default class ServerConnector {
         this.api = api;
         api.getEventApi().addEventHandler(IncomingEventNames.playerPositionUpdate, this.onPlayerPositionUpdate.bind(this));
         api.getEventApi().addEventHandler(IncomingEventNames.lineBufferUpdate, this.onLineBufferUpdate.bind(this));
+        api.getEventApi().addEventHandler(IncomingEventNames.gameStateUpdate, this.onGameStateUpdate.bind(this));
+    }
+
+    onGameStateUpdate(eventData: EventDataObject): void {
+        const {startingTicks} = eventData as GeneralGameStateEventData;
+        this.gameState.startingTicks = startingTicks;
     }
 
     onPlayerPositionUpdate(eventData: EventDataObject): void {
@@ -52,9 +60,9 @@ export default class ServerConnector {
     }
 
     onLineBufferUpdate(eventData: EventDataObject): void {
-        const lineBufferData = eventData as OnLineBufferUpdateEventData;
+        const {lineBuffer} = eventData as OnLineBufferUpdateEventData;
 
-        this.gameState.setLineBuffer(lineBufferData.lineBuffer);
+        this.gameState.setLineBuffer(lineBuffer);
     }
 
     sendInputChangeEvent(inputs: InputData): void {
@@ -65,6 +73,5 @@ export default class ServerConnector {
             } as OnInputChangedEventData
         );
     }
-
 
 }

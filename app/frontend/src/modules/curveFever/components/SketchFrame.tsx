@@ -5,6 +5,7 @@ import GameStateManager from "./GameStateManager";
 import {InputData} from "@edelgames/types/src/modules/curveFever/CFEvents";
 import {SketchProps} from "react-p5";
 import type P5 from "p5";
+import ProfileManager from "../../../framework/util/ProfileManager";
 
 interface IProps extends DefaultCanvasProps {
     connector: ServerConnector,
@@ -99,7 +100,31 @@ export default class Sketch extends AbstractCanvas<IProps, {}> {
             if (!data) {
                 continue;
             }
-            p5.circle(data.position.x, data.position.y, 10);
+
+            p5.push();
+            {
+                p5.translate(data.position.x, data.position.y);
+
+                if (data.playerId === ProfileManager.getId()) {
+                    const startingTicks = Math.min(this.props.gameState.startingTicks, 100);
+                    if (startingTicks > 0) {
+                        p5.circle(0, 0, startingTicks);
+                    }
+                }
+
+                p5.rotate(data.rotation);
+
+                p5.beginShape();
+                {
+                    p5.vertex(15, 0);
+                    p5.vertex(-10, -10);
+                    p5.vertex( -5,  0);
+                    p5.vertex(-10, 10);
+                    p5.vertex(15, 0);
+                }
+                p5.endShape();
+            }
+            p5.pop();
         }
     }
 

@@ -32,3 +32,8 @@ export type InputData = {
 export type OnInputChangedEventData = {
 	inputs: InputData
 };
+
+export type GeneralGameStateEventData = {
+	startingTicks: number,
+	arenaSize: VectorObj
+}

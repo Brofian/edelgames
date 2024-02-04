@@ -3,33 +3,28 @@ import PlayerManager from "./PlayerManager";
 import Vector from "../../framework/structures/Vector";
 import ClientConnector from "./ClientConnector";
 import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
+import GameStateContainer from "./GameStateContainer";
 
 /*
  * The actual game instance, that controls and manages the game
  */
 export default class CurveFeverGame extends ModuleGame {
 
-	width: number = 600;
-	height: number = 400;
-
 	tick: number = 0;
 
-	players: PlayerManager = new PlayerManager();
+	gameState: GameStateContainer = new GameStateContainer();
+	players: PlayerManager = new PlayerManager(this.gameState);
 	clientConnector: ClientConnector;
 
 	onGameInitialize(): void {
-		this.clientConnector = new ClientConnector(this.players, this.api);
+		this.clientConnector = new ClientConnector(this.players, this.gameState, this.api);
 		this.api.getUtilApi().getTimer().startInterval('tick', this.onTick.bind(this), 50);
-
-
-		const fieldMinPosition = Vector.create(0,0);
-		const fieldMaxPosition = Vector.create(this.width,this.height);
 
 		for (const player of this.api.getPlayerApi().getRoomMembers()) {
 			this.players.createPlayerData(
 				player.getId(),
-				fieldMinPosition,
-				fieldMaxPosition
+				Vector.create(0,0),
+				this.gameState.getArenaSize()
 			);
 		}
 	}
@@ -41,12 +36,26 @@ export default class CurveFeverGame extends ModuleGame {
 
 	onTick(): void {
 		this.tick++;
+		this.gameState.decreaseStartingTicks();
 
-		// TODO do calculations
+
 		this.players.calculateStep(this.tick);
 
-		// TODO send client updates
-		this.clientConnector.updateClients();
+		this.clientConnector.sendPlayerPositions();
+		this.clientConnector.sendCreatedLines();
+		if (this.gameState.getStartingTicks() > 0) {
+			this.clientConnector.sendGeneralGameState();
+		}
+	}
+
+	onPlayerJoin(eventData: EventDataObject | null) {
+		super.onPlayerJoin(eventData);
+		this.clientConnector.sendGeneralGameState();
+	}
+
+	onPlayerReconnect(eventData: EventDataObject | null) {
+		super.onPlayerReconnect(eventData);
+		this.clientConnector.sendGeneralGameState();
 	}
 
 

@@ -1,16 +1,18 @@
 import PlayerManager from "./PlayerManager";
 import ModuleApi from "../../framework/modules/ModuleApi";
 import {
-    CFLine, OnInputChangedEventData,
+    CFLine, GeneralGameStateEventData, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
     OnPlayerPositionUpdateEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
 import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
+import GameStateContainer from "./GameStateContainer";
 
 
 const OutgoingEventNames = {
     playerPositionUpdate: 'playerPositionUpdate',
     lineBufferUpdate: 'lineBufferUpdate',
+    gameStateUpdate: 'gameStateUpdate',
 }
 
 const IncomingEventNames = {
@@ -19,21 +21,28 @@ const IncomingEventNames = {
 
 export default class ClientConnector {
 
-    private players: PlayerManager;
-    private api: ModuleApi;
+    private readonly players: PlayerManager;
+    private readonly gameState: GameStateContainer;
+    private readonly api: ModuleApi;
 
-    constructor(players: PlayerManager, api: ModuleApi) {
+    constructor(players: PlayerManager, gameState: GameStateContainer, api: ModuleApi) {
         this.players = players;
+        this.gameState = gameState;
         this.api = api;
         this.api.getEventApi().addEventHandler(IncomingEventNames.inputChangedEvent, this.onPlayerInputChangedEvent.bind(this));
     }
 
-    updateClients(): void {
-        this.sendPlayerPositions();
-        this.sendCreatedLines();
+    sendGeneralGameState(): void {
+        this.api.getEventApi().sendRoomMessage(
+            OutgoingEventNames.gameStateUpdate,
+            {
+                startingTicks: this.gameState.getStartingTicks(),
+                arenaSize: this.gameState.getArenaSize().toObject()
+            } as GeneralGameStateEventData
+        );
     }
 
-    private sendPlayerPositions(): void {
+    sendPlayerPositions(): void {
         this.api.getEventApi().sendRoomMessage(
             OutgoingEventNames.playerPositionUpdate,
             {
@@ -49,7 +58,7 @@ export default class ClientConnector {
         );
     }
 
-    private sendCreatedLines(): void {
+    sendCreatedLines(): void {
         const lineBuffer = this.players.getLineBuffer();
         if (lineBuffer.length === 0) {
             return;

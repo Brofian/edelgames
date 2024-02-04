@@ -13,6 +13,8 @@ type PlayerDataStorage = {[key: string]: PlayerData};
 
 export default class GameStateManager {
 
+    public startingTicks: number = 0;
+
     private registeredPlayerIds: string[] = [];
     private playerData: PlayerDataStorage = {};
 
