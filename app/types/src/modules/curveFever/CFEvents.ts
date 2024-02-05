@@ -37,3 +37,13 @@ export type GeneralGameStateEventData = {
 	startingTicks: number,
 	arenaSize: VectorObj
 }
+
+export type UpgradeObj = {
+	type: UpgradeTypes,
+	position: VectorObj
+}
+
+export type UpgradeTypes = 'thicken'|'invisible'|'thin';
+export type UpgradesChangedEventData = {
+	upgrades: UpgradeObj[]
+};

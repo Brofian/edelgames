@@ -4,7 +4,7 @@ import {
     GeneralGameStateEventData,
     InputData, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
-    OnPlayerPositionUpdateEventData
+    OnPlayerPositionUpdateEventData, UpgradesChangedEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
 import GameStateManager from "./GameStateManager";
 
@@ -12,10 +12,11 @@ const OutgoingEventNames = {
     inputChangedEvent: 'inputChangedEvent'
 }
 
-const IncomingEventNames = {
+export const IncomingEventNames = {
     playerPositionUpdate: 'playerPositionUpdate',
     lineBufferUpdate: 'lineBufferUpdate',
     gameStateUpdate: 'gameStateUpdate',
+    upgradesChanged: 'upgradesChanged',
 }
 
 export default class ServerConnector {
@@ -29,11 +30,19 @@ export default class ServerConnector {
         api.getEventApi().addEventHandler(IncomingEventNames.playerPositionUpdate, this.onPlayerPositionUpdate.bind(this));
         api.getEventApi().addEventHandler(IncomingEventNames.lineBufferUpdate, this.onLineBufferUpdate.bind(this));
         api.getEventApi().addEventHandler(IncomingEventNames.gameStateUpdate, this.onGameStateUpdate.bind(this));
+        api.getEventApi().addEventHandler(IncomingEventNames.upgradesChanged, this.onUpdatesChanged.bind(this));
+    }
+
+    onUpdatesChanged(eventData: EventDataObject): void {
+        const {upgrades} = eventData as UpgradesChangedEventData;
+        this.gameState.activeUpgrades = upgrades;
+        console.log(upgrades);
     }
 
     onGameStateUpdate(eventData: EventDataObject): void {
-        const {startingTicks} = eventData as GeneralGameStateEventData;
+        const {startingTicks, arenaSize} = eventData as GeneralGameStateEventData;
         this.gameState.startingTicks = startingTicks;
+        this.gameState.arenaSize = arenaSize;
     }
 
     onPlayerPositionUpdate(eventData: EventDataObject): void {

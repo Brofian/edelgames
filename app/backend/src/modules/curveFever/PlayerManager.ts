@@ -1,6 +1,6 @@
 import Vector from "../../framework/structures/Vector";
 import Line from "../../framework/structures/Line";
-import {InputData} from "@edelgames/types/src/modules/curveFever/CFEvents";
+import {InputData, UpgradeTypes} from "@edelgames/types/src/modules/curveFever/CFEvents";
 import GameStateContainer from "./GameStateContainer";
 
 export type PlayerData = {
@@ -12,6 +12,8 @@ export type PlayerData = {
     inputs: InputData;
     dead: boolean;
     color: number;
+    activeUpgrade?: UpgradeTypes;
+    activeUpgradeTimer: number;
     lastLine?: GeneratedLine;
     ticksSinceRotation: number;
     lineTimer: number;
@@ -29,6 +31,7 @@ type PlayerDataStorage = {[key: string]: PlayerData};
 const PI = 3.14159265359;
 const TICKS_UNTIL_SPACE = 100;
 const TICKS_FOR_SPACE = 10;
+const CURVE_SLOWDOWN = 0.9;
 
 export default class PlayerManager {
 
@@ -73,7 +76,9 @@ export default class PlayerManager {
             color: parseInt(playerId, 36)%360,
             lastLine: undefined,
             ticksSinceRotation: 0,
-            lineTimer: 0
+            lineTimer: 0,
+            activeUpgrade: undefined,
+            activeUpgradeTimer: 0,
         };
         this.data[playerId] = playerData;
         this.registeredPlayerIds.push(playerId);
@@ -91,10 +96,12 @@ export default class PlayerManager {
     calculateStep(tick: number): void {
         this.linesBuffer.length = 0;
 
-        const turningSlowDown: number = 0.9;
-
         for (const playerId of this.registeredPlayerIds) {
             const data = this.data[playerId];
+
+            if (data.activeUpgradeTimer) {
+                data.activeUpgradeTimer--;
+            }
             if (data.dead) continue;
 
             const prevPosition = data.position.copy();
@@ -112,21 +119,29 @@ export default class PlayerManager {
             const isSlippery = false;
             if (isSlippery) {
                 data.velocity.add(acceleration);
-                data.velocity.limit(data.isTurning ? (5*turningSlowDown) : 5);
+                data.velocity.limit(data.isTurning ? (5*CURVE_SLOWDOWN) : 5);
 
                 data.position.add(data.velocity);
                 data.velocity.scale(0.9);
             }
             else {
-                acceleration.setMag(data.isTurning ? (5*turningSlowDown) : 5);
+                acceleration.setMag(data.isTurning ? (5*CURVE_SLOWDOWN) : 5);
                 data.position.add(acceleration);
             }
 
             // do collision checks
-            if (data.velocity.mag() >= 4.4) {
-                data.dead =
-                    this.checkLineCollision(tick, data.position, 5) ||
-                    this.checkArenaCollision(data.position);
+            if (!isSlippery || data.velocity.mag() >= 4.4) {
+                data.dead ||= this.checkArenaCollision(data.position);
+                if (data.activeUpgradeTimer <= 0 || data.activeUpgrade !== 'invisible') {
+                    data.dead ||= this.checkLineCollision(tick, data.position, 5);
+                }
+            }
+            this.checkUpgradeCollision(data.position, data);
+
+
+            if (data.activeUpgradeTimer > 0 && data.activeUpgrade === 'invisible') {
+                // skip line drawing
+                continue;
             }
 
             data.lineTimer--;
@@ -162,11 +177,17 @@ export default class PlayerManager {
             }
         }
         else {
-            // player is turning. Create a new line segment
+            // player is turning or not allowed to continue old line. Create a new line segment
+            let lineWidth: number = 5;
+            if (data.activeUpgradeTimer > 0) {
+                if (data.activeUpgrade === 'thicken') lineWidth = 8;
+                else if (data.activeUpgrade === 'thin') lineWidth = 3;
+            }
+
             newLine = {
                 line: Line.create(prevPosition, data.position.copy()),
                 tick: tick,
-                thickness: 5,
+                thickness: lineWidth,
                 color: data.color
             }
 
@@ -188,8 +209,22 @@ export default class PlayerManager {
         }
     }
 
+    checkUpgradeCollision(position: Vector, data: PlayerData): void {
+        const upgradeRadius = 15;
+        for (const upgrade of this.gameState.getActiveUpgrades()) {
+            if (position.distSqr(upgrade.position) < (upgradeRadius*upgradeRadius)) {
+                // hit
+                this.gameState.setUpgradeAsPickedUp(upgrade);
+                data.activeUpgrade = upgrade.type;
+                data.activeUpgradeTimer = 100;
+                data.lastLine = undefined;
+                break;
+            }
+        }
+    }
+
     checkArenaCollision(position: Vector): boolean {
-        const arenaSize: Vector = Vector.create(600,400);
+        const arenaSize: Vector = this.gameState.getArenaSize();
 
         return (
             position.x < 0 ||
@@ -216,6 +251,4 @@ export default class PlayerManager {
 
         return false;
     }
-
-
 }

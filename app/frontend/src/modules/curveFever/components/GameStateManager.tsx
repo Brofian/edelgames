@@ -1,7 +1,7 @@
 import {VectorObj} from "../../../framework/structures/Vector";
-import {CFLine} from "@edelgames/types/src/modules/curveFever/CFEvents";
+import {CFLine, UpgradeObj} from "@edelgames/types/src/modules/curveFever/CFEvents";
 
-type PlayerData = {
+export type PlayerData = {
     playerId: string;
     position: VectorObj;
     previousPosition: VectorObj;
@@ -14,6 +14,8 @@ type PlayerDataStorage = {[key: string]: PlayerData};
 export default class GameStateManager {
 
     public startingTicks: number = 0;
+    public arenaSize: VectorObj = {x: 0, y: 0};
+    public activeUpgrades: UpgradeObj[] = [];
 
     private registeredPlayerIds: string[] = [];
     private playerData: PlayerDataStorage = {};

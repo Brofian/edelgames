@@ -3,7 +3,7 @@ import ModuleApi from "../../framework/modules/ModuleApi";
 import {
     CFLine, GeneralGameStateEventData, OnInputChangedEventData,
     OnLineBufferUpdateEventData,
-    OnPlayerPositionUpdateEventData
+    OnPlayerPositionUpdateEventData, UpgradesChangedEventData
 } from "@edelgames/types/src/modules/curveFever/CFEvents";
 import {EventDataObject} from "@edelgames/types/src/app/ApiTypes";
 import GameStateContainer from "./GameStateContainer";
@@ -13,6 +13,7 @@ const OutgoingEventNames = {
     playerPositionUpdate: 'playerPositionUpdate',
     lineBufferUpdate: 'lineBufferUpdate',
     gameStateUpdate: 'gameStateUpdate',
+    upgradesChanged: 'upgradesChanged',
 }
 
 const IncomingEventNames = {
@@ -30,6 +31,15 @@ export default class ClientConnector {
         this.gameState = gameState;
         this.api = api;
         this.api.getEventApi().addEventHandler(IncomingEventNames.inputChangedEvent, this.onPlayerInputChangedEvent.bind(this));
+    }
+
+    sendUpgradeChanged(): void {
+        this.api.getEventApi().sendRoomMessage(
+            OutgoingEventNames.upgradesChanged,
+            {
+                upgrades: this.gameState.getActiveUpgrades()
+            } as UpgradesChangedEventData
+        );
     }
 
     sendGeneralGameState(): void {

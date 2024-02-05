@@ -38,13 +38,18 @@ export default class CurveFeverGame extends ModuleGame {
 		this.tick++;
 		this.gameState.decreaseStartingTicks();
 
-
 		this.players.calculateStep(this.tick);
 
 		this.clientConnector.sendPlayerPositions();
 		this.clientConnector.sendCreatedLines();
 		if (this.gameState.getStartingTicks() > 0) {
 			this.clientConnector.sendGeneralGameState();
+		}
+		else {
+			this.gameState.attemptCreatingUpgrade();
+			if (this.gameState.activeUpgradesHaveChanged) {
+				this.clientConnector.sendUpgradeChanged();
+			}
 		}
 	}
 

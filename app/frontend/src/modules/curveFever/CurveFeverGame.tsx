@@ -32,9 +32,10 @@ export default class CurveFeverGame
 			<div id={'curveFever'}>
 				<SketchFrame
 					width={600}
-					height={400}
+					height={600}
 					connector={this.serverConnector}
 					gameState={this.gameState}
+					eventApi={this.api.getEventApi()}
 				/>
 			</div>
 		);
